@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IdentificaCRT — Regime de Tributação via XML</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{
+  --bg-dark:#0f172a; --bg-header:#111827; --card-dark:#1e293b;
+  --card-light:#ffffff; --text-light:#f8fafc; --text-dark:#0f172a;
+  --text-muted:#64748b; --accent-green:#00e676; --accent-green-dark:#00c853;
+  --accent-blue:#3b82f6; --border-color:#e2e8f0; --bg-body:#f8fafc;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+body{background:var(--bg-body);color:var(--text-dark);min-height:100vh}
+.header{background:var(--bg-header);color:var(--text-light);padding:24px 32px;box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.header-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.pill-tag{background:var(--accent-blue);color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
+.title{font-size:24px;font-weight:800}
+.subtitle{color:#94a3b8;font-size:13px;margin-top:4px}
+.header-stats{display:flex;gap:12px;flex-wrap:wrap}
+.stat-card{background:var(--card-dark);border:1px solid #334155;padding:8px 16px;border-radius:8px;text-align:right;min-width:140px}
+.stat-label{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px}
+.stat-value{font-size:18px;font-weight:800;color:var(--accent-green)}
+.container{max-width:1400px;margin:24px auto;padding:0 24px}
+.upload-section{background:var(--card-dark);border:2px dashed var(--accent-blue);border-radius:12px;padding:28px;text-align:center;color:var(--text-light);cursor:pointer;transition:.2s;margin-bottom:20px}
+.upload-section:hover,.upload-section.dragover{border-color:var(--accent-green);background:#16213a}
+.upload-icon{font-size:32px;color:var(--accent-green);margin-bottom:8px}
+.upload-btn{background:var(--accent-green);color:#052e16;font-weight:700;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;margin-top:10px;display:inline-block;font-size:13px}
+.upload-btn:hover{background:var(--accent-green-dark);color:#fff}
+#fileInput{display:none}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-bottom:20px}
+.legend-card{background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:12px 14px;font-size:12px;border-left:4px solid var(--text-muted)}
+.legend-card b{display:block;font-size:12px;margin-bottom:2px}
+.legend-card span{color:var(--text-muted)}
+.lg-1{border-color:#10b981}.lg-2{border-color:#f59e0b}.lg-3{border-color:#3b82f6}.lg-4{border-color:#8b5cf6}.lg-0{border-color:#ef4444}
+.summary-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px;margin-bottom:24px}
+@media (max-width:1100px){.summary-grid{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}}
+.card{background:var(--card-light);border-radius:10px;padding:14px 12px;box-shadow:0 1px 3px rgba(0,0,0,.05);border:1px solid var(--border-color);border-top:3px solid var(--text-muted);min-width:0}
+.card-title{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px}
+.card-value{font-size:24px;font-weight:800}
+.card-desc{font-size:11px;color:#64748b;margin-top:4px}
+.notes-bar{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-bottom:20px}
+.notes-empty{grid-column:1/-1;background:#fff;border:1px dashed var(--border-color);border-radius:10px;padding:20px;text-align:center;color:var(--text-muted);font-size:13px}
+.note-card{background:var(--card-dark);border:1px solid #334155;border-radius:10px;padding:12px 16px;color:var(--text-light)}
+.note-card-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.note-card-title{font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.note-remove{background:none;border:none;color:#94a3b8;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px}
+.note-remove:hover{color:#f87171;background:rgba(248,113,113,.1)}
+.note-card-meta{font-size:11px;color:#94a3b8;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.action-bar{background:var(--card-dark);color:var(--text-light);padding:14px 20px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.action-bar h3{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.search-box{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:7px 12px;border-radius:6px;font-size:12px;width:220px}
+.search-box:focus{outline:2px solid var(--accent-blue)}
+.filter-select{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:7px 10px;border-radius:6px;font-size:12px;max-width:220px}
+.btn-action{background:#334155;color:#fff;border:none;padding:7px 12px;border-radius:6px;font-weight:600;font-size:12px;cursor:pointer;white-space:nowrap}
+.btn-action:hover{background:#475569}
+.btn-export{background:var(--accent-green);color:#052e16}
+.btn-export:hover{background:var(--accent-green-dark);color:#fff}
+.table-container{background:#fff;border-radius:0 0 10px 10px;box-shadow:0 4px 6px -1px rgba(0,0,0,.05);border:1px solid var(--border-color);border-top:none}
+.table-wrap{overflow-x:auto;overflow-y:visible}
+table{width:100%;min-width:1150px;border-collapse:separate;border-spacing:0;font-size:13px}
+thead tr.group-header th{background:#1e293b;color:#94a3b8;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:8px 12px;border-bottom:1px solid #334155;white-space:nowrap}
+thead tr.col-header th{background:#0f172a;color:#e2e8f0;font-weight:600;font-size:11px;padding:10px 12px;white-space:nowrap;border-bottom:1px solid #334155}
+tbody td{padding:12px;border-bottom:1px solid var(--border-color);vertical-align:top}
+tbody tr:nth-child(even){background:#f8fafc}
+tbody tr:hover{background:#f1f5f9}
+.text-right{text-align:right}.text-center{text-align:center}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.b-1{background:#ecfdf5;color:#047857;border:1px solid #6ee7b7}
+.b-2{background:#fffbeb;color:#b45309;border:1px solid #fcd34d}
+.b-3{background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd}
+.b-31{background:#eff6ff;color:#1e40af;border:1px solid #60a5fa}
+.b-32{background:#eef2ff;color:#4338ca;border:1px solid #a5b4fc}
+.b-4{background:#f5f3ff;color:#6d28d9;border:1px solid #c4b5fd}
+.b-0{background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5}
+.crt-chip{font-family:monospace;background:#0f172a;color:#00e676;padding:3px 9px;border-radius:6px;font-weight:800;font-size:12px;white-space:nowrap;display:inline-block}
+.pis-chip{font-family:monospace;background:#f1f5f9;border:1px solid #cbd5e1;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap;display:inline-block}
+.emit-name{font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+.emit-sub{font-size:11px;color:#64748b;line-height:1.4;overflow-wrap:anywhere}
+.val-nf{font-weight:800;color:#0f172a;white-space:nowrap}
+.val-nf-sub{font-size:10px;color:#64748b}
+.table-wrap table td:nth-child(2){min-width:190px;max-width:270px}
+.table-wrap table td:nth-child(3){min-width:220px;max-width:300px}
+.table-wrap table th:nth-child(4),.table-wrap table td:nth-child(4){width:66px}
+.table-wrap table th:nth-child(5),.table-wrap table td:nth-child(5){max-width:160px}
+.table-wrap table td:nth-child(6){max-width:130px}
+.table-wrap table td:nth-child(8){max-width:185px;font-size:11px;line-height:1.45}
+.badge-reg{white-space:normal !important;line-height:1.4;display:inline-block;max-width:155px;vertical-align:middle}
+tfoot td{background:#0f172a;color:#e2e8f0;font-weight:700;padding:12px;border-top:2px solid #334155;font-size:12.5px}
+tfoot td.tot-money{color:#00e676;white-space:nowrap}
+tfoot td.tot-grand{color:#fff;background:#1e40af}
+.card-money{font-size:clamp(15px,1.25vw,20px);white-space:nowrap}
+.card-title{overflow-wrap:anywhere}
+.totals-bar{background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:13px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.totals-bar .t-item{font-size:12px;color:#475569}
+.totals-bar .t-item b{display:block;font-size:15px;color:#0f172a}
+.totals-bar .t-grand b{color:#1d4ed8;font-size:18px}
+.pagination{background:#fff;border:1px solid var(--border-color);border-top:none;border-radius:0 0 10px 10px;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px;color:#475569}
+.pagination .pg-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.pg-btn{background:#0f172a;color:#e2e8f0;border:1px solid #334155;padding:6px 11px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer}
+.pg-btn:hover:not(:disabled){background:#1e293b}
+.pg-btn:disabled{opacity:.4;cursor:not-allowed}
+.pg-info{font-weight:600}
+.pg-select{background:#fff;border:1px solid #cbd5e1;color:#0f172a;padding:6px 8px;border-radius:6px;font-size:12px}
+.fix-select{background:#fff;border:1px solid #cbd5e1;color:#0f172a;padding:5px 6px;border-radius:6px;font-size:11px;max-width:118px;cursor:pointer}
+.clear-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;font-size:12px;color:#64748b;flex-wrap:wrap}
+.btn-clear-top{background:#7f1d1d;color:#fecaca;border:1px solid #ef4444}
+.btn-clear-top:hover{background:#991b1b;color:#fff}
+.empty-state{padding:48px;text-align:center;color:var(--text-muted);font-size:14px}
+.explain{background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:16px 20px;margin-bottom:20px;font-size:12.5px;color:#475569;line-height:1.6}
+.explain b{color:#0f172a}
+.footer{text-align:center;margin-top:32px;padding:20px;color:var(--text-muted);font-size:12px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#111827;color:#f8fafc;padding:12px 20px;border-radius:8px;border:1px solid #334155;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:999;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.print-header{display:none}
+@media print{.no-print{display:none!important}body{background:#fff!important}.print-header{display:block;text-align:center;margin-bottom:16px}.table-wrap{max-height:none;overflow:visible}.col-crt{display:none!important}}
+</style>
+</head>
+<body>
+<header class="header no-print">
+  <div class="header-top">
+    <span class="pill-tag"><i class="fa-solid fa-file-circle-check"></i> Leitor de XML • Tag &lt;CRT&gt;</span>
+    <div class="header-stats">
+      <div class="stat-card"><div class="stat-label">XMLs analisados</div><div class="stat-value" id="hdrTotal">0</div></div>
+      <div class="stat-card"><div class="stat-label">Valor total das notas</div><div class="stat-value" id="hdrValor">R$ 0,00</div></div>
+      <div class="stat-card"><div class="stat-label">Regime identificado</div><div class="stat-value" id="hdrRegime" style="color:#38bdf8;font-size:15px">—</div></div>
+    </div>
+  </div>
+  <h1 class="title">Identificador de Regime de Tributação — via &lt;CRT&gt;</h1>
+  <p class="subtitle">Upload de NF-e / NFC-e em XML • Lê emit.CRT + PIS (pPIS) • Simples, Presumido, Real e MEI</p>
+</header>
+
+<div class="container">
+  <div class="print-header"><h1>Relatório — Regime de Tributação (CRT)</h1><p id="printDate"></p></div>
+
+  <div class="upload-section no-print" id="dropZone">
+    <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+    <h2 style="font-size:18px">Arraste e solte os XMLs aqui</h2>
+    <p style="margin-top:4px;color:#94a3b8;font-size:13px">Ou clique para selecionar um ou vários arquivos .xml</p>
+    <button class="upload-btn"><i class="fa-solid fa-folder-open"></i> Selecionar Arquivos XML</button>
+    <input type="file" id="fileInput" accept=".xml" multiple>
+  </div>
+
+  <div class="legend no-print">
+    <div class="legend-card lg-1"><b>CRT 1 — Simples Nacional</b><span>Micro e pequenas empresas do Simples.</span></div>
+    <div class="legend-card lg-2"><b>CRT 2 — Simples, excesso sublimite</b><span>Estoura sublimite estadual de receita bruta.</span></div>
+    <div class="legend-card lg-3"><b>CRT 3 — Regime Normal</b><span>Lucro Presumido (PIS 0,65%) ou Lucro Real (PIS 1,65%) — definido pelo &lt;pPIS&gt;.</span></div>
+    <div class="legend-card lg-4"><b>CRT 4 — MEI</b><span>Microempreendedor Individual.</span></div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="card" style="border-top-color:#10b981"><div class="card-title">CRT 1 • Simples Nacional</div><div class="card-value card-money" id="v1" style="color:#047857">R$ 0,00</div><div class="card-desc" id="c1">0 nota(s)</div></div>
+    <div class="card" style="border-top-color:#f59e0b"><div class="card-title">CRT 2 • Excesso sublimite</div><div class="card-value card-money" id="v2" style="color:#b45309">R$ 0,00</div><div class="card-desc" id="c2">0 nota(s)</div></div>
+    <div class="card" style="border-top-color:#3b82f6"><div class="card-title">CRT 3 • Regime Normal</div><div class="card-value card-money" id="v3" style="color:#1d4ed8">R$ 0,00</div><div class="card-desc" id="c3">0 nota(s)</div></div>
+    <div class="card" style="border-top-color:#3b82f6"><div class="card-title">↳ Presumido (PIS 0,65%)</div><div class="card-value card-money" id="v31" style="color:#1e40af">R$ 0,00</div><div class="card-desc" id="c31">0 nota(s)</div></div>
+    <div class="card" style="border-top-color:#6366f1"><div class="card-title">↳ Real (PIS 1,65%)</div><div class="card-value card-money" id="v32" style="color:#4338ca">R$ 0,00</div><div class="card-desc" id="c32">0 nota(s)</div></div>
+    <div class="card" style="border-top-color:#8b5cf6"><div class="card-title">CRT 4 • MEI</div><div class="card-value card-money" id="v4" style="color:#6d28d9">R$ 0,00</div><div class="card-desc" id="c4">0 nota(s)</div></div>
+    <div class="card" style="border-top-color:#00e676;background:linear-gradient(180deg,#fff 0%,#f0fdf4 100%)"><div class="card-title" style="color:#15803d">Total geral • todos os regimes</div><div class="card-value card-money" id="vTotal" style="color:#166534">R$ 0,00</div><div class="card-desc" id="cTotal">0 nota(s)</div></div>
+  </div>
+
+  <div class="clear-bar no-print" id="clearBar" style="display:none">
+    <span id="clearCount"></span>
+    <button class="btn-action btn-clear-top" id="btnClearTop"><i class="fa-solid fa-trash"></i> Limpar tudo</button>
+  </div>
+
+  <div class="notes-bar no-print" id="notesBar"><div class="notes-empty">Nenhum XML carregado. Faça o upload para identificar o regime.</div></div>
+
+  <div class="explain">
+    <b>Como funciona (somente NF-e/NFC-e):</b> o site lê a tag <b>&lt;CRT&gt;</b> dentro de <b>&lt;emit&gt;</b> de cada XML.
+    <b>1</b> = Simples Nacional • <b>2</b> = Simples – excesso de sublimite •
+    <b>3</b> = Regime Normal, desdobrado pelo PIS: <b>&lt;pPIS&gt; 0,65%</b> indica <b>Lucro Presumido</b> (cumulativo) e <b>1,65%</b> indica <b>Lucro Real</b> (não-cumulativo) •
+    <b>4</b> = MEI. Se o PIS vier com outra alíquota ou ausente, o CRT 3 é exibido como “Regime Normal (a confirmar PIS)”.
+    Quando o XML não traz marcador suficiente, use <b>“Corrigir…”</b> na coluna Ação para ajustar — os cards e totais recalculam na hora.
+  </div>
+
+  <div class="action-bar no-print">
+    <h3><i class="fa-solid fa-table" style="color:#00e676"></i> Resultados <span id="itemCountTag" style="font-size:12px;color:#94a3b8;font-weight:normal">(0)</span></h3>
+    <div class="toolbar">
+      <input type="search" id="searchInput" class="search-box" placeholder="Buscar empresa, CNPJ, arquivo...">
+      <select id="regimeFilter" class="filter-select">
+        <option value="all">Todos os regimes</option>
+        <option value="1">CRT 1 — Simples Nacional</option>
+        <option value="2">CRT 2 — Excesso sublimite</option>
+        <option value="3">CRT 3 — Regime Normal (todos)</option>
+        <option value="3P">CRT 3 — Lucro Presumido (0,65%)</option>
+        <option value="3R">CRT 3 — Lucro Real (1,65%)</option>
+        <option value="4">CRT 4 — MEI</option>
+        <option value="0">Sem CRT / inválido</option>
+      </select>
+      <button class="btn-action btn-export" id="btnCSV"><i class="fa-solid fa-download"></i> CSV</button>
+      <button class="btn-action" id="btnPrint"><i class="fa-solid fa-print"></i> Imprimir</button>
+      <button class="btn-action" id="btnClear"><i class="fa-solid fa-trash"></i> Limpar</button>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr class="group-header"><th colspan="3">1. Emitente / Arquivo</th><th colspan="2" style="color:#4ade80">2. CRT</th><th colspan="4" style="color:#38bdf8">3. Regime + PIS + Valor</th></tr>
+          <tr class="col-header"><th>#</th><th>Empresa / CNPJ</th><th>Arquivo / NF-e</th><th class="text-center col-crt">CRT</th><th class="text-center">Regime</th><th class="text-center">PIS (pPIS)</th><th class="text-right">Valor da NF (vNF)</th><th>Interpretação</th><th class="text-center">Ação</th></tr>
+        </thead>
+        <tbody id="tableBody"><tr><td colspan="9" class="empty-state">Nenhum arquivo XML carregado ainda.</td></tr></tbody>
+        <tfoot id="tableFoot" style="display:none">
+          <tr><td colspan="6" class="text-right" id="footLabel">SOMA (filtro atual) — por regime:</td><td class="text-right tot-money" id="footDetail" colspan="2" style="text-align:left;font-weight:600"></td><td class="text-right tot-money" id="footTotal"></td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="pagination no-print" id="pagination">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <label for="perPage">Linhas por página:</label>
+        <select id="perPage" class="pg-select">
+          <option value="10" selected>10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+        <span class="pg-info" id="pgInfo">0 de 0</span>
+      </div>
+      <div class="pg-controls">
+        <button class="pg-btn" id="pgFirst" title="Primeira">«</button>
+        <button class="pg-btn" id="pgPrev" title="Anterior">‹</button>
+        <span class="pg-info" id="pgPage">Pág. 1/1</span>
+        <button class="pg-btn" id="pgNext" title="Próxima">›</button>
+        <button class="pg-btn" id="pgLast" title="Última">»</button>
+      </div>
+    </div>
+  </div>
+  <footer class="footer no-print">IdentificaCRT — leitura local no navegador, nenhum arquivo é enviado para servidor • Somente NF-e/NFC-e • Tag &lt;CRT&gt; em &lt;emit&gt;</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+var docs=[], seq=0, page=1, perPage=10;
+var dropZone=document.getElementById('dropZone'), fileInput=document.getElementById('fileInput'),
+    notesBar=document.getElementById('notesBar'), tbody=document.getElementById('tableBody'),
+    searchInput=document.getElementById('searchInput'), regimeFilter=document.getElementById('regimeFilter'),
+    perPageSel=document.getElementById('perPage'),
+    toastEl=document.getElementById('toast'), toastTimer=null;
+
+function toast(m){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){toastEl.classList.remove('show')},3500)}
+function gv(p,t){var e=p.getElementsByTagName(t)[0];return e?e.textContent.trim():null}
+function num(v){if(v==null)return NaN;var n=parseFloat(String(v).replace(',','.'));return isNaN(n)?NaN:n}
+function fmtPIS(v){if(v==null||isNaN(v))return '—';return v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:4})+'%'}
+function fmtMoney(v){return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function esc(s){return String(s==null?'':s)}
+
+var REGIMES={
+ '1':{nome:'Simples Nacional',classe:'b-1',desc:'Empresa optante pelo Simples Nacional.'},
+ '2':{nome:'Simples Nacional — excesso de sublimite',classe:'b-2',desc:'Simples com excesso de sublimite de receita bruta (recolhe ICMS/ISS fora do DAS).'},
+ '4':{nome:'MEI — Microempreendedor Individual',classe:'b-4',desc:'Simples Nacional – MEI.'}
+};
+function near(a,b,tol){return Math.abs(a-b)<=tol}
+
+function classify(crt,pPIS){
+  crt=String(crt||'').trim();
+  if(crt==='1')return{key:'1',nome:REGIMES['1'].nome,classe:'b-1',interp:'CRT 1 → Simples Nacional.'};
+  if(crt==='2')return{key:'2',nome:REGIMES['2'].nome,classe:'b-2',interp:'CRT 2 → Simples com excesso de sublimite de receita bruta.'};
+  if(crt==='4')return{key:'4',nome:REGIMES['4'].nome,classe:'b-4',interp:'CRT 4 → MEI (Microempreendedor Individual).'};
+  if(crt==='3'){
+    if(pPIS!=null&&!isNaN(pPIS)){
+      if(near(pPIS,0.65,0.02))return{key:'3P',nome:'Regime Normal — Lucro Presumido',classe:'b-31',interp:'CRT 3 + pPIS '+fmtPIS(pPIS)+' (≈0,65%) → Lucro Presumido (PIS cumulativo).'};
+      if(near(pPIS,1.65,0.02))return{key:'3R',nome:'Regime Normal — Lucro Real',classe:'b-32',interp:'CRT 3 + pPIS '+fmtPIS(pPIS)+' (≈1,65%) → Lucro Real (PIS não-cumulativo).'};
+      return{key:'3',nome:'Regime Normal (PIS '+fmtPIS(pPIS)+')',classe:'b-3',interp:'CRT 3 com pPIS '+fmtPIS(pPIS)+' fora do padrão 0,65%/1,65% — confirmar regime (Presumido ou Real) com a contabilidade.'};
+    }
+    return{key:'3',nome:'Regime Normal (PIS não informado)',classe:'b-3',interp:'CRT 3 → Regime Normal. PIS ausente no XML: confirme Presumido (0,65%) ou Real (1,65%).'};
+  }
+  return{key:'0',nome:'CRT não encontrado / inválido',classe:'b-0',interp:'Tag <CRT> ausente ou com valor inesperado ("'+esc(crt)+'"). Verifique se é NF-e/NFC-e válida.'};
+}
+
+function manualReg(k){
+  if(k==='1')return{key:'1',nome:'Simples Nacional',classe:'b-1',interp:'CRT 1 → Simples Nacional.'};
+  if(k==='2')return{key:'2',nome:'Simples Nacional — excesso de sublimite',classe:'b-2',interp:'CRT 2 → Simples com excesso de sublimite.'};
+  if(k==='4')return{key:'4',nome:'MEI — Microempreendedor Individual',classe:'b-4',interp:'CRT 4 → MEI (Microempreendedor Individual).'};
+  if(k==='3P')return{key:'3P',nome:'Regime Normal — Lucro Presumido',classe:'b-31',interp:'Lucro Presumido (PIS cumulativo).'};
+  if(k==='3R')return{key:'3R',nome:'Regime Normal — Lucro Real',classe:'b-32',interp:'Lucro Real (PIS não-cumulativo).'};
+  return{key:'3',nome:'Regime Normal (a confirmar)',classe:'b-3',interp:'Regime Normal — Presumido ou Real a confirmar.'};
+}
+function applyManual(d,key){
+  if(!key){if(d.regAuto)d.reg=d.regAuto;d.manual=null;return}
+  if(!d.regAuto)d.regAuto=d.reg;
+  var m=manualReg(key);
+  m.interp+=' (ajuste manual; leitura automática era: '+d.regAuto.nome+')';
+  d.reg=m;d.manual=key;
+}
+
+function mostFrequent(arr){
+  var freq={},best=arr[0],bestN=0;
+  arr.forEach(function(v){var k=Number(v).toFixed(4);freq[k]=(freq[k]||0)+1;if(freq[k]>bestN){bestN=freq[k];best=v}});
+  return best;
+}
+function parseNFe(inf,xml,fileName){
+  var emit=inf.getElementsByTagName('emit')[0];
+  if(!emit)return{error:'Tag <emit> não encontrada.'};
+  var crt=null;
+  for(var i=0;i<emit.childNodes.length;i++){if(emit.childNodes[i].nodeType===1&&emit.childNodes[i].nodeName==='CRT'){crt=emit.childNodes[i].textContent.trim();break}}
+  if(crt==null)crt=gv(emit,'CRT');
+  var nome=gv(emit,'xNome')||'(emitente sem nome)';
+  var cnpj=gv(emit,'CNPJ')||gv(emit,'CPF')||'—';
+  var uf=gv(emit,'UF')||'';
+  var ide=inf.getElementsByTagName('ide')[0];
+  var nNF=ide?gv(ide,'nNF'):null, serie=ide?gv(ide,'serie'):null, mod=ide?gv(ide,'mod'):null;
+  var tipo=(mod==='65')?'NFC-e':'NF-e';
+  var pPIS=null, pisCST=null, pisGrupo='—';
+  var dets=xml.getElementsByTagName('det');
+  var pList=[];
+  for(var d=0;d<dets.length;d++){
+    var det=dets[d];
+    var pis=det.getElementsByTagName('PIS')[0];
+    if(!pis)continue;
+    var v=num(gv(pis,'pPIS'));
+    if(!isNaN(v))pList.push(v);
+    if(pisCST==null){var c=gv(pis,'CST');if(c)pisCST=c;}
+    if(pisGrupo==='—'){
+      if(pis.getElementsByTagName('PISAliq').length)pisGrupo='PISAliq (tributado por alíquota)';
+      else if(pis.getElementsByTagName('PISQtde').length)pisGrupo='PISQtde';
+      else if(pis.getElementsByTagName('PISNT').length)pisGrupo='PISNT (não tributado)';
+      else if(pis.getElementsByTagName('PISOutr').length)pisGrupo='PISOutr';
+      else if(pis.getElementsByTagName('PISSN').length||pis.getElementsByTagName('PISN').length)pisGrupo='PISSN (Simples)';
+    }
+  }
+  if(pList.length)pPIS=mostFrequent(pList);
+  var vNF=num(gv(inf,'vNF'));
+  if(isNaN(vNF)){
+    var tot=inf.getElementsByTagName('total')[0];
+    var icms=tot?tot.getElementsByTagName('ICMSTot')[0]:null;
+    vNF=icms?num(gv(icms,'vNF')):NaN;
+  }
+  if(isNaN(vNF)){
+    var soma=0,achou=false;
+    for(var s=0;s<dets.length;s++){var pr=dets[s].getElementsByTagName('prod')[0];if(pr){var vp=num(gv(pr,'vProd'));if(!isNaN(vp)){soma+=vp;achou=true}}}
+    vNF=achou?soma:0;
+  }
+  var cls=classify(crt,pPIS);
+  return{id:++seq,tipo:tipo,fileName:fileName,nome:nome,cnpj:cnpj,uf:uf,nNF:nNF||'?',serie:serie||'?',mod:mod||'',crt:crt,pPIS:pPIS,pisCST:pisCST,pisGrupo:pisGrupo,reg:cls,nItens:dets.length,vNF:vNF||0,origem:'<CRT> em <emit>'};
+}
+
+function parseXML(text,fileName){
+  var p=new DOMParser(), xml=p.parseFromString(text,'text/xml');
+  if(xml.getElementsByTagName('parsererror').length>0)return{error:'XML inválido.'};
+  var inf=xml.getElementsByTagName('infNFe')[0];
+  if(!inf)return{error:'Arquivo rejeitado: somente NF-e/NFC-e são aceitas (tag <infNFe> não encontrada).'};
+  return parseNFe(inf,xml,fileName);
+}
+
+function readFile(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result)};r.onerror=function(){rej(r.error)};r.readAsText(f)})}
+async function addFile(f){
+  try{
+    var t=await readFile(f), r=parseXML(t,f.name);
+    if(r.error){toast('"'+f.name+'": '+r.error);return}
+    docs.push(r);page=1;render();
+    toast('"'+f.name+'": CRT '+(r.crt==null?'ausente':r.crt)+' → '+r.reg.nome);
+  }catch(e){toast('Erro em "'+f.name+'": '+e.message)}
+}
+function handleFiles(fs){for(var i=0;i<fs.length;i++){if(!/\.xml$/i.test(fs[i].name)){toast('"'+fs[i].name+'" ignorado (não é .xml)');continue}addFile(fs[i])}}
+
+dropZone.addEventListener('click',function(){fileInput.click()});
+fileInput.addEventListener('change',function(){handleFiles(fileInput.files);fileInput.value=''});
+['dragover','dragenter'].forEach(function(e){dropZone.addEventListener(e,function(ev){ev.preventDefault();dropZone.classList.add('dragover')})});
+['dragleave','drop'].forEach(function(e){dropZone.addEventListener(e,function(ev){ev.preventDefault();dropZone.classList.remove('dragover')})});
+dropZone.addEventListener('drop',function(e){if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files)});
+
+function filtered(){
+  var q=searchInput.value.trim().toUpperCase(), f=regimeFilter.value;
+  return docs.filter(function(d){
+    if(f!=='all'){
+      if(f==='3'){if(!(d.reg.key==='3'||d.reg.key==='3P'||d.reg.key==='3R'))return false}
+      else if(d.reg.key!==f)return false;
+    }
+    if(q){var h=(d.nome+' '+d.cnpj+' '+d.fileName+' '+(d.nNF||'')).toUpperCase();if(h.indexOf(q)<0)return false}
+    return true;
+  });
+}
+
+function sum(arr){var s=0;for(var i=0;i<arr.length;i++)s+=arr[i].vNF||0;return s}
+function render(){
+  // contadores + somas por regime (cada item = 1 NF do emitente)
+  function by(k){return docs.filter(function(d){return d.reg.key===k})}
+  var L1=by('1'),L2=by('2'),LP=by('3P'),LR=by('3R'),
+      L3x=docs.filter(function(d){return d.reg.key==='3'}),
+      L3=docs.filter(function(d){return d.reg.key.indexOf('3')===0}),
+      L4=by('4'),L0=by('0');
+  var s1=sum(L1),s2=sum(L2),sP=sum(LP),sR=sum(LR),s3x=sum(L3x),s3=sP+sR+s3x,s4=sum(L4),sT=sum(docs);
+  document.getElementById('v1').textContent=fmtMoney(s1);
+  document.getElementById('v2').textContent=fmtMoney(s2);
+  document.getElementById('v3').textContent=fmtMoney(s3);
+  document.getElementById('v31').textContent=fmtMoney(sP);
+  document.getElementById('v32').textContent=fmtMoney(sR);
+  document.getElementById('v4').textContent=fmtMoney(s4);
+  document.getElementById('vTotal').textContent=fmtMoney(sT);
+  document.getElementById('c1').textContent=L1.length+' nota(s)';
+  document.getElementById('c2').textContent=L2.length+' nota(s)';
+  document.getElementById('c3').textContent=L3.length+' nota(s) • '+LP.length+' Pres. + '+LR.length+' Real'+(L3x.length?' + '+L3x.length+' a conf.':'');
+  document.getElementById('c31').textContent=LP.length+' nota(s)';
+  document.getElementById('c32').textContent=LR.length+' nota(s)';
+  document.getElementById('c4').textContent=L4.length+' nota(s)';
+  document.getElementById('cTotal').textContent=docs.length+' nota(s)'+(L0.length?' • '+L0.length+' sem CRT':'');
+  document.getElementById('hdrTotal').textContent=docs.length;
+  document.getElementById('hdrValor').textContent=fmtMoney(sT);
+  document.getElementById('hdrRegime').textContent=docs.length===0?'—':(docs.length===1?docs[0].reg.nome:L3.length+' Normal • '+L1.length+' Simples • '+L4.length+' MEI');
+  var fLen=filtered().length, totalPages=Math.max(1,Math.ceil(fLen/perPage));
+  if(page>totalPages)page=totalPages;
+  if(page<1)page=1;
+  document.getElementById('itemCountTag').textContent='('+fLen+' de '+docs.length+') • Pág. '+page+'/'+totalPages;
+  var clearBar=document.getElementById('clearBar');
+  if(docs.length){clearBar.style.display='';document.getElementById('clearCount').textContent=docs.length+' nota(s) carregada(s) — limpe para carregar outros XMLs.'}
+  else{clearBar.style.display='none'}
+  document.getElementById('printDate').textContent='Gerado em '+new Date().toLocaleString('pt-BR')+' • Total geral '+fmtMoney(sT)+' em '+docs.length+' nota(s)';
+  renderNotes();renderTable();
+}
+
+function renderNotes(){
+  notesBar.textContent='';
+  if(!docs.length){var e=document.createElement('div');e.className='notes-empty';e.textContent='Nenhum XML carregado. Faça o upload para identificar o regime.';notesBar.appendChild(e);return}
+  docs.forEach(function(d){
+    var c=document.createElement('div');c.className='note-card';
+    var h=document.createElement('div');c.className+='';h.className='note-card-head';
+    var t=document.createElement('div');t.className='note-card-title';t.textContent=d.nome;t.title=d.fileName+' — '+d.nome;
+    var rm=document.createElement('button');rm.className='note-remove';rm.textContent='✕';rm.title='Remover';
+    rm.addEventListener('click',function(){docs=docs.filter(function(x){return x.id!==d.id});render()});
+    h.appendChild(t);h.appendChild(rm);c.appendChild(h);
+    var m=document.createElement('div');m.className='note-card-meta';m.textContent='NF '+(d.nNF||'?')+' • Série '+(d.serie||'?')+' • '+d.fileName;m.title=d.fileName;c.appendChild(m);
+    var vm=document.createElement('div');vm.style.cssText='font-size:13px;font-weight:800;color:#00e676;margin-bottom:8px';vm.textContent=fmtMoney(d.vNF)+' • vNF';c.appendChild(vm);
+    var b=document.createElement('span');b.className='badge '+d.reg.classe;b.textContent='CRT '+(d.crt==null?'?':d.crt)+' • '+d.reg.nome;b.title=d.reg.interp;c.appendChild(b);
+    notesBar.appendChild(c);
+  });
+}
+
+function renderTable(){
+  var list=filtered();tbody.textContent='';
+  var foot=document.getElementById('tableFoot');
+  var pgInfo=document.getElementById('pgInfo'),pgPage=document.getElementById('pgPage');
+  function updPag(total,totalPages){
+    pgInfo.textContent=list.length+' resultado(s) • '+total+' na página atual';
+    pgPage.textContent='Pág. '+page+'/'+totalPages;
+    document.getElementById('pgFirst').disabled=document.getElementById('pgPrev').disabled=(page<=1);
+    document.getElementById('pgNext').disabled=document.getElementById('pgLast').disabled=(page>=totalPages);
+  }
+  if(!docs.length){tbody.innerHTML='<tr><td colspan="9" class="empty-state">Nenhum arquivo XML carregado ainda.</td></tr>';foot.style.display='none';updPag(0,1);return}
+  if(!list.length){tbody.innerHTML='<tr><td colspan="9" class="empty-state">Nenhum resultado para o filtro atual.</td></tr>';foot.style.display='none';updPag(0,1);return}
+  var totalPages=Math.max(1,Math.ceil(list.length/perPage));
+  if(page>totalPages)page=totalPages;
+  var start=(page-1)*perPage, pageItems=list.slice(start,start+perPage);
+  pageItems.forEach(function(d,i){
+    var idx=start+i;
+    var tr=document.createElement('tr');
+    function td(txt,cls){var e=document.createElement('td');if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+    tr.appendChild(td(idx+1,'text-center'));
+    var te=document.createElement('td');
+    var n1=document.createElement('div');n1.className='emit-name';n1.textContent=d.nome;te.appendChild(n1);
+    var n2=document.createElement('div');n2.className='emit-sub';n2.textContent='CNPJ/CPF: '+d.cnpj+(d.uf?' • UF: '+d.uf:'');te.appendChild(n2);
+    tr.appendChild(te);
+    var tf=document.createElement('td');
+    var f1=document.createElement('div');f1.className='emit-sub';f1.style.color='#0f172a';f1.style.fontWeight='600';f1.textContent=d.fileName;f1.title=d.fileName;tf.appendChild(f1);
+    var f2=document.createElement('div');f2.className='emit-sub';f2.textContent='NF '+(d.nNF||'?')+' • Série '+(d.serie||'?')+(d.mod?' • Mod. '+d.mod:'')+' • '+d.nItens+' item(ns)';tf.appendChild(f2);
+    tr.appendChild(tf);
+    var tc=document.createElement('td');tc.className='text-center col-crt';
+    var chip=document.createElement('span');chip.className='crt-chip';chip.textContent='CRT '+(d.crt==null?'?':d.crt);chip.title=(d.origem||'<CRT>')+' • PIS: '+((d.pPIS==null||isNaN(d.pPIS))?'ausente':fmtPIS(d.pPIS));tc.appendChild(chip);tr.appendChild(tc);
+    var tr2=document.createElement('td');tr2.className='text-center';
+    var bd=document.createElement('span');bd.className='badge '+d.reg.classe+' badge-reg';bd.textContent=d.reg.nome;bd.title=d.reg.interp;tr2.appendChild(bd);tr.appendChild(tr2);
+    var tp=document.createElement('td');tp.className='text-center';
+    var pc=document.createElement('span');pc.className='pis-chip';pc.textContent=(d.pPIS==null||isNaN(d.pPIS))?'pPIS ausente':'pPIS '+fmtPIS(d.pPIS);pc.title='Grupo: '+d.pisGrupo+(d.pisCST?' • CST PIS: '+d.pisCST:'');tp.appendChild(pc);
+    if(d.pisCST){var cs=document.createElement('div');cs.className='emit-sub';cs.textContent='CST PIS: '+d.pisCST+' • '+d.pisGrupo;tp.appendChild(cs)}
+    tr.appendChild(tp);
+    var tv=document.createElement('td');tv.className='text-right';
+    var vv=document.createElement('div');vv.className='val-nf';vv.textContent=fmtMoney(d.vNF);tv.appendChild(vv);
+    var vs=document.createElement('div');vs.className='val-nf-sub';vs.textContent='vNF • NF '+(d.nNF||'?');tv.appendChild(vs);
+    tr.appendChild(tv);
+    var ti=document.createElement('td');ti.style.color='#475569';ti.textContent=d.reg.interp;tr.appendChild(ti);
+    var ta=document.createElement('td');ta.className='text-center';
+    var fix=document.createElement('select');fix.className='fix-select';fix.title='Corrigir regime quando o XML não traz marcador suficiente (ex.: CRT 3 sem PIS)';
+    var opts=[['','Corrigir…'],['1','CRT 1 • Simples'],['2','CRT 2 • Sublimite'],['3P','Presumido 0,65%'],['3R','Real 1,65%'],['3','Normal a conf.'],['4','CRT 4 • MEI']];
+    for(var oi=0;oi<opts.length;oi++){var oo=document.createElement('option');oo.value=opts[oi][0];oo.textContent=opts[oi][1];fix.appendChild(oo)}
+    fix.value=d.manual||'';
+    fix.addEventListener('change',function(){applyManual(d,fix.value);render()});
+    if(d.manual){fix.style.borderColor='#f59e0b';fix.style.background='#fffbeb'}
+    ta.appendChild(fix);
+    var del=document.createElement('button');del.className='btn-action';del.style.marginTop='6px';del.innerHTML='<i class="fa-solid fa-xmark"></i>';
+    del.title='Remover';del.addEventListener('click',function(){docs=docs.filter(function(x){return x.id!==d.id});render()});
+    ta.appendChild(del);tr.appendChild(ta);
+    tbody.appendChild(tr);
+  });
+  // rodapé: soma do filtro atual por regime + soma total
+  var f1=list.filter(function(d){return d.reg.key==='1'}).length,
+      f2=list.filter(function(d){return d.reg.key==='2'}).length,
+      fP=list.filter(function(d){return d.reg.key==='3P'}).length,
+      fR=list.filter(function(d){return d.reg.key==='3R'}).length,
+      fX=list.filter(function(d){return d.reg.key==='3'}).length,
+      f4=list.filter(function(d){return d.reg.key==='4'}).length;
+  function s(list2){var t=0;for(var i=0;i<list2.length;i++)t+=list2[i].vNF||0;return t}
+  var g1=s(list.filter(function(d){return d.reg.key==='1'})),
+      g2=s(list.filter(function(d){return d.reg.key==='2'})),
+      gP=s(list.filter(function(d){return d.reg.key==='3P'})),
+      gR=s(list.filter(function(d){return d.reg.key==='3R'})),
+      gX=s(list.filter(function(d){return d.reg.key==='3'})),
+      g4=s(list.filter(function(d){return d.reg.key==='4'})),
+      g0=s(list.filter(function(d){return d.reg.key==='0'})),
+      gT=s(list);
+  var parts=[];
+  if(f1)parts.push('Simples '+fmtMoney(g1));
+  if(f2)parts.push('Sublimite '+fmtMoney(g2));
+  if(fP)parts.push('Presumido '+fmtMoney(gP));
+  if(fR)parts.push('Real '+fmtMoney(gR));
+  if(fX)parts.push('Normal a conf. '+fmtMoney(gX));
+  if(f4)parts.push('MEI '+fmtMoney(g4));
+  if(g0)parts.push('S/CRT '+fmtMoney(g0));
+  document.getElementById('footDetail').textContent=parts.join(' • ')||'—';
+  document.getElementById('footTotal').textContent='TOTAL '+fmtMoney(gT)+' ('+list.length+' NFs)';
+  foot.style.display='';
+  updPag(pageItems.length,totalPages);
+}
+
+searchInput.addEventListener('input',function(){page=1;render()});
+regimeFilter.addEventListener('change',function(){page=1;render()});
+perPageSel.addEventListener('change',function(){perPage=parseInt(perPageSel.value,10)||10;page=1;render()});
+document.getElementById('pgFirst').addEventListener('click',function(){page=1;render()});
+document.getElementById('pgPrev').addEventListener('click',function(){if(page>1){page--;render()}});
+document.getElementById('pgNext').addEventListener('click',function(){page++;render()});
+document.getElementById('pgLast').addEventListener('click',function(){var tp=Math.max(1,Math.ceil(filtered().length/perPage));page=tp;render()});
+var _savePage=1,_savePer=10;
+window.addEventListener('beforeprint',function(){_savePage=page;_savePer=perPage;page=1;perPage=Math.max(filtered().length,1);renderTable();var fl=document.getElementById('footLabel');if(fl)fl.colSpan=5});
+window.addEventListener('afterprint',function(){page=_savePage;perPage=_savePer;var fl=document.getElementById('footLabel');if(fl)fl.colSpan=6;renderTable()});
+function clearAll(){if(!docs.length)return;if(confirm('Remover todos os XMLs e carregar outros?')){docs=[];page=1;render()}}
+document.getElementById('btnClear').addEventListener('click',clearAll);
+document.getElementById('btnClearTop').addEventListener('click',clearAll);
+document.getElementById('btnPrint').addEventListener('click',function(){window.print()});
+document.getElementById('btnCSV').addEventListener('click',function(){
+  if(!docs.length){toast('Nada para exportar.');return}
+  var head=['arquivo','emitente','cnpj_cpf','uf','nNF','serie','crt','regime','pPIS_percent','cst_pis','grupo_pis','valor_nf','interpretacao'];
+  var q=function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'};
+  var lines=[head.join(';')];
+  filtered().forEach(function(d){lines.push([d.fileName,d.nome,d.cnpj,d.uf,d.nNF,d.serie,d.crt==null?'':d.crt,d.reg.nome,(d.pPIS==null||isNaN(d.pPIS))?'':String(d.pPIS).replace('.',','),d.pisCST||'',d.pisGrupo,String(d.vNF||0).replace('.',','),d.reg.interp].map(q).join(';'))});
+  // linha de totais por regime + total geral
+  var L=filtered();
+  function st(k){var t=0;for(var i=0;i<L.length;i++)if(L[i].reg.key===k)t+=L[i].vNF||0;return t}
+  var tT=0;for(var j=0;j<L.length;j++)tT+=L[j].vNF||0;
+  lines.push('');
+  lines.push(['SOMA POR REGIME','','','','','','','Simples CRT1: '+String(st('1')).replace('.',','),'','','',''].map(q).join(';'));
+  lines.push(['','','','','','','','Presumido: '+String(st('3P')).replace('.',',')+' | Real: '+String(st('3R')).replace('.',','),'','','',''].map(q).join(';'));
+  lines.push(['TOTAL GERAL ('+L.length+' NFs)','','','','','','',''+String(tT).replace('.',','),'','','',''].map(q).join(';'));
+  var blob=new Blob(["\ufeff"+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='regime-crt.csv';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},2000);
+});
+render();
+})();
+</script>
+</body>
+</html>
