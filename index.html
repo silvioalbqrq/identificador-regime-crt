@@ -5,27 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IdentificaCRT — Regime de Tributação via XML</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230F2A44'/%3E%3Crect x='0' y='26' width='32' height='3' fill='%23C9A227'/%3E%3Ctext x='16' y='22' font-family='Arial' font-size='13' font-weight='bold' fill='white' text-anchor='middle'%3EID%3C/text%3E%3C/svg%3E">
 <style>
 :root{
-  --bg-dark:#0f172a; --bg-header:#111827; --card-dark:#1e293b;
-  --card-light:#ffffff; --text-light:#f8fafc; --text-dark:#0f172a;
+  --bg-dark:#0f2a44; --bg-header:#0f2a44; --card-dark:#1a3a5c; --hub-gold:#c9a227; --hub-gold2:#a8861b; --hub-goldbg:#faf4e0;
+  --card-light:#ffffff; --text-light:#f8fafc; --text-dark:#1e2a38;
   --text-muted:#64748b; --accent-green:#00e676; --accent-green-dark:#00c853;
-  --accent-blue:#3b82f6; --border-color:#e2e8f0; --bg-body:#f8fafc;
+  --accent-blue:#3b82f6; --border-color:#dce4ec; --bg-body:#f4f2ec;
 }
-*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
-body{background:var(--bg-body);color:var(--text-dark);min-height:100vh}
-.header{background:var(--bg-header);color:var(--text-light);padding:24px 32px;box-shadow:0 4px 12px rgba(0,0,0,.12)}
+*{box-sizing:border-box;margin:0;padding:0;font-family:Georgia,'Times New Roman',serif}
+body{background:var(--bg-body);color:var(--text-dark);min-height:100vh;line-height:1.55}
+.header{background:var(--bg-header);color:var(--text-light);padding:24px 32px;box-shadow:0 4px 12px rgba(0,0,0,.12);border-bottom:4px solid var(--hub-gold)}
 .header-top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
-.pill-tag{background:var(--accent-blue);color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
-.title{font-size:24px;font-weight:800}
-.subtitle{color:#94a3b8;font-size:13px;margin-top:4px}
+.pill-tag{background:var(--hub-gold);color:#0f2a44;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
+.title{font-size:24px;font-weight:800;letter-spacing:-.01em}
+.subtitle{color:#c6d4e4;font-size:13px;margin-top:4px}
+.hero-eyebrow{color:var(--hub-gold);text-transform:uppercase;letter-spacing:.22em;font-size:11px;font-weight:700;margin:0 0 8px}
+.brand-mark{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:10px;background:var(--hub-gold);color:var(--bg-dark);font-weight:800;font-size:15px;margin-right:10px;vertical-align:middle}
+.hub-foot{background:var(--bg-dark);color:#cdd9e8;border-top:4px solid var(--hub-gold);border-radius:10px;text-align:center;font-size:12px;padding:16px;line-height:1.7}
+.hub-foot a{color:#fff}
+.hub-foot small{color:#9db1c7}
 .header-stats{display:flex;gap:12px;flex-wrap:wrap}
 .stat-card{background:var(--card-dark);border:1px solid #334155;padding:8px 16px;border-radius:8px;text-align:right;min-width:140px}
 .stat-label{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px}
 .stat-value{font-size:18px;font-weight:800;color:var(--accent-green)}
 .container{max-width:1400px;margin:24px auto;padding:0 24px}
 .upload-section{background:var(--card-dark);border:2px dashed var(--accent-blue);border-radius:12px;padding:28px;text-align:center;color:var(--text-light);cursor:pointer;transition:.2s;margin-bottom:20px}
-.upload-section:hover,.upload-section.dragover{border-color:var(--accent-green);background:#16213a}
+.upload-section:hover,.upload-section.dragover{border-color:var(--hub-gold);background:#0f2a44}
 .upload-icon{font-size:32px;color:var(--accent-green);margin-bottom:8px}
 .upload-btn{background:var(--accent-green);color:#052e16;font-weight:700;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;margin-top:10px;display:inline-block;font-size:13px}
 .upload-btn:hover{background:var(--accent-green-dark);color:#fff}
@@ -53,7 +59,7 @@ body{background:var(--bg-body);color:var(--text-dark);min-height:100vh}
 .action-bar h3{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
 .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .search-box{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:7px 12px;border-radius:6px;font-size:12px;width:220px}
-.search-box:focus{outline:2px solid var(--accent-blue)}
+.search-box:focus{outline:2px solid var(--hub-gold)}
 .filter-select{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:7px 10px;border-radius:6px;font-size:12px;max-width:220px}
 .btn-action{background:#334155;color:#fff;border:none;padding:7px 12px;border-radius:6px;font-weight:600;font-size:12px;cursor:pointer;white-space:nowrap}
 .btn-action:hover{background:#475569}
@@ -62,8 +68,8 @@ body{background:var(--bg-body);color:var(--text-dark);min-height:100vh}
 .table-container{background:#fff;border-radius:0 0 10px 10px;box-shadow:0 4px 6px -1px rgba(0,0,0,.05);border:1px solid var(--border-color);border-top:none}
 .table-wrap{overflow-x:auto;overflow-y:visible}
 table{width:100%;min-width:1150px;border-collapse:separate;border-spacing:0;font-size:13px}
-thead tr.group-header th{background:#1e293b;color:#94a3b8;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:8px 12px;border-bottom:1px solid #334155;white-space:nowrap}
-thead tr.col-header th{background:#0f172a;color:#e2e8f0;font-weight:600;font-size:11px;padding:10px 12px;white-space:nowrap;border-bottom:1px solid #334155}
+thead tr.group-header th{background:#1a3a5c;color:#94a3b8;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:8px 12px;border-bottom:1px solid #334155;white-space:nowrap}
+thead tr.col-header th{background:#0f2a44;color:#e2e8f0;font-weight:600;font-size:11px;padding:10px 12px;white-space:nowrap;border-bottom:1px solid #334155}
 tbody td{padding:12px;border-bottom:1px solid var(--border-color);vertical-align:top}
 tbody tr:nth-child(even){background:#f8fafc}
 tbody tr:hover{background:#f1f5f9}
@@ -80,7 +86,7 @@ tbody tr:hover{background:#f1f5f9}
 .pis-chip{font-family:monospace;background:#f1f5f9;border:1px solid #cbd5e1;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap;display:inline-block}
 .emit-name{font-weight:700;line-height:1.35;overflow-wrap:anywhere}
 .emit-sub{font-size:11px;color:#64748b;line-height:1.4;overflow-wrap:anywhere}
-.val-nf{font-weight:800;color:#0f172a;white-space:nowrap}
+.val-nf{font-weight:800;color:#0f2a44;white-space:nowrap}
 .val-nf-sub{font-size:10px;color:#64748b}
 .table-wrap table td:nth-child(2){min-width:190px;max-width:270px}
 .table-wrap table td:nth-child(3){min-width:220px;max-width:300px}
@@ -89,7 +95,7 @@ tbody tr:hover{background:#f1f5f9}
 .table-wrap table td:nth-child(6){max-width:130px}
 .table-wrap table td:nth-child(8){max-width:185px;font-size:11px;line-height:1.45}
 .badge-reg{white-space:normal !important;line-height:1.4;display:inline-block;max-width:155px;vertical-align:middle}
-tfoot td{background:#0f172a;color:#e2e8f0;font-weight:700;padding:12px;border-top:2px solid #334155;font-size:12.5px}
+tfoot td{background:#0f2a44;color:#e2e8f0;font-weight:700;padding:12px;border-top:2px solid #334155;font-size:12.5px}
 tfoot td.tot-money{color:#00e676;white-space:nowrap}
 tfoot td.tot-grand{color:#fff;background:#1e40af}
 .card-money{font-size:clamp(15px,1.25vw,20px);white-space:nowrap}
@@ -98,14 +104,16 @@ tfoot td.tot-grand{color:#fff;background:#1e40af}
 .totals-bar .t-item{font-size:12px;color:#475569}
 .totals-bar .t-item b{display:block;font-size:15px;color:#0f172a}
 .totals-bar .t-grand b{color:#1d4ed8;font-size:18px}
+.explain,.totals-bar{border-top:3px solid var(--hub-gold)}
+.upload-section{border-top:3px solid var(--hub-gold)}
 .pagination{background:#fff;border:1px solid var(--border-color);border-top:none;border-radius:0 0 10px 10px;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px;color:#475569}
 .pagination .pg-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.pg-btn{background:#0f172a;color:#e2e8f0;border:1px solid #334155;padding:6px 11px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer}
-.pg-btn:hover:not(:disabled){background:#1e293b}
+.pg-btn{background:#0f2a44;color:#e2e8f0;border:1px solid #334155;padding:6px 11px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer}
+.pg-btn:hover:not(:disabled){background:#1a3a5c}
 .pg-btn:disabled{opacity:.4;cursor:not-allowed}
 .pg-info{font-weight:600}
-.pg-select{background:#fff;border:1px solid #cbd5e1;color:#0f172a;padding:6px 8px;border-radius:6px;font-size:12px}
-.fix-select{background:#fff;border:1px solid #cbd5e1;color:#0f172a;padding:5px 6px;border-radius:6px;font-size:11px;max-width:118px;cursor:pointer}
+.pg-select{background:#fff;border:1px solid #cbd5e1;color:#0f2a44;padding:6px 8px;border-radius:6px;font-size:12px}
+.fix-select{background:#fff;border:1px solid #cbd5e1;color:#0f2a44;padding:5px 6px;border-radius:6px;font-size:11px;max-width:118px;cursor:pointer}
 .clear-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;font-size:12px;color:#64748b;flex-wrap:wrap}
 .btn-clear-top{background:#7f1d1d;color:#fecaca;border:1px solid #ef4444}
 .btn-clear-top:hover{background:#991b1b;color:#fff}
@@ -113,7 +121,7 @@ tfoot td.tot-grand{color:#fff;background:#1e40af}
 .explain{background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:16px 20px;margin-bottom:20px;font-size:12.5px;color:#475569;line-height:1.6}
 .explain b{color:#0f172a}
 .footer{text-align:center;margin-top:32px;padding:20px;color:var(--text-muted);font-size:12px}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#111827;color:#f8fafc;padding:12px 20px;border-radius:8px;border:1px solid #334155;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:999;max-width:90vw}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#0f2a44;color:#f8fafc;padding:12px 20px;border-radius:8px;border:1px solid #334155;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:999;max-width:90vw}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .print-header{display:none}
 @media print{.no-print{display:none!important}body{background:#fff!important}.print-header{display:block;text-align:center;margin-bottom:16px}.table-wrap{max-height:none;overflow:visible}.col-crt{display:none!important}}
@@ -129,8 +137,9 @@ tfoot td.tot-grand{color:#fff;background:#1e40af}
       <div class="stat-card"><div class="stat-label">Regime identificado</div><div class="stat-value" id="hdrRegime" style="color:#38bdf8;font-size:15px">—</div></div>
     </div>
   </div>
-  <h1 class="title">Identificador de Regime de Tributação — via &lt;CRT&gt;</h1>
-  <p class="subtitle">Upload de NF-e / NFC-e em XML • Lê emit.CRT + PIS (pPIS) • Simples, Presumido, Real e MEI</p>
+  <p class="hero-eyebrow">Hub Fiscal · VMF Contabilidade · Reforma Tributária EC 132/2023 · LC 214/2025</p>
+  <h1 class="title"><span class="brand-mark">ID</span>Identificador de Regime de Tributação — via &lt;CRT&gt;</h1>
+  <p class="subtitle">Upload de NF-e / NFC-e em XML • Lê emit.CRT + PIS (pPIS) • Simples, Presumido, Real e MEI · <b style="color:var(--hub-gold)">por VMF Contabilidade</b> · <a href="https://silvioalbqrq.github.io/portal-fiscal/" style="color:var(--hub-gold);text-decoration:none">Hub Fiscal</a></p>
 </header>
 
 <div class="container">
@@ -229,7 +238,7 @@ tfoot td.tot-grand{color:#fff;background:#1e40af}
       </div>
     </div>
   </div>
-  <footer class="footer no-print">IdentificaCRT — leitura local no navegador, nenhum arquivo é enviado para servidor • Somente NF-e/NFC-e • Tag &lt;CRT&gt; em &lt;emit&gt;</footer>
+  <footer class="footer hub-foot no-print"><strong style="color:#fff">Hub Fiscal · VMF Contabilidade</strong> · <a href="https://silvioalbqrq.github.io/portal-fiscal/">Voltar ao Hub</a><br>IdentificaCRT — leitura local no navegador, nenhum arquivo é enviado para servidor • Somente NF-e/NFC-e • Tag &lt;CRT&gt; em &lt;emit&gt;</footer>
 </div>
 <div class="toast" id="toast"></div>
 
