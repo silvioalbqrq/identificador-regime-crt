@@ -24,7 +24,7 @@ Por nota, o site aponta as rejeições 1275, 1276, 1277 e 1284, o MEI que inform
 
 ## Recursos
 
-- Upload em lote por arrastar/soltar ou seleção múltipla; ordem dos arquivos preservada; XML repetido (mesma chave de acesso) é ignorado com aviso
+- Upload em lote por arrastar/soltar, seleção de vários arquivos ou de uma pasta inteira (subpastas incluídas); ordem preservada; XML repetido (mesma chave de acesso) é ignorado com aviso
 - Arquivo com mais de uma NF-e é dividido: uma linha por nota
 - Cards por regime e total geral, com valor e quantidade
 - Busca por empresa, arquivo, número da nota ou CNPJ (com ou sem pontuação), filtro por regime (inclui **Regime Regular do IBS/CBS (todos)** e **Com opção explícita pelo Regular (tp 1/4)**), paginação

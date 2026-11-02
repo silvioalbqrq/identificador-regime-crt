@@ -143,9 +143,11 @@ tfoot td.tot-money{color:#00e676;white-space:nowrap}
   <div class="upload-section no-print" id="dropZone">
     <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
     <h2 style="font-size:18px">Arraste e solte os XMLs aqui</h2>
-    <p style="margin-top:4px;color:#94a3b8;font-size:13px">Ou clique para selecionar um ou vários arquivos .xml</p>
-    <button class="upload-btn"><i class="fa-solid fa-folder-open"></i> Selecionar Arquivos XML</button>
+    <p style="margin-top:4px;color:#94a3b8;font-size:13px">Ou selecione vários arquivos .xml ou uma pasta inteira</p>
+    <button class="upload-btn" id="btnFiles" type="button"><i class="fa-solid fa-folder-open"></i> Selecionar Arquivos XML</button>
+    <button class="upload-btn" id="btnFolder" type="button" style="margin-left:8px;background:var(--hub-gold);color:var(--bg-dark)"><i class="fa-solid fa-folder-tree"></i> Selecionar Pasta</button>
     <input type="file" id="fileInput" accept=".xml" multiple>
+    <input type="file" id="dirInput" webkitdirectory directory multiple>
   </div>
 
   <div class="legend no-print">
@@ -263,7 +265,7 @@ tfoot td.tot-money{color:#00e676;white-space:nowrap}
 "use strict";
 var docs=[], seq=0, page=1, perPage=10;
 var dropZone=document.getElementById('dropZone'), fileInput=document.getElementById('fileInput'),
-    tbody=document.getElementById('tableBody'),
+    dirInput=document.getElementById('dirInput'), tbody=document.getElementById('tableBody'),
     searchInput=document.getElementById('searchInput'), regimeFilter=document.getElementById('regimeFilter'),
     perPageSel=document.getElementById('perPage'),
     toastEl=document.getElementById('toast'), toastTimer=null;
@@ -458,16 +460,20 @@ async function lerArquivo(f){
   }catch(e){toast('Erro em "'+f.name+'": '+e.message);return{add:0,dup:0}}
 }
 async function handleFiles(fs){
-  var add=0,dup=0;
+  fs=[].slice.call(fs); /* o input é limpo logo após o change: copiar antes de qualquer await */
+  var add=0,dup=0,ign=0;
   for(var i=0;i<fs.length;i++){
-    if(!/\.xml$/i.test(fs[i].name)){toast('"'+fs[i].name+'" ignorado (não é .xml)');continue}
+    if(!/\.xml$/i.test(fs[i].name)){ign++;continue}
     var r=await lerArquivo(fs[i]);add+=r.add;dup+=r.dup;
   }
-  if(add||dup){page=1;render();toast(add+' nota(s) carregada(s)'+(dup?' • '+dup+' repetida(s) ignorada(s)':''))}
+  if(add||dup){page=1;render()}
+  if(add||dup||ign)toast(add+' nota(s) carregada(s)'+(dup?' • '+dup+' repetida(s) ignorada(s)':'')+(ign?' • '+ign+' arquivo(s) não XML ignorado(s)':''));
 }
 
 dropZone.addEventListener('click',function(){fileInput.click()});
 fileInput.addEventListener('change',function(){handleFiles(fileInput.files);fileInput.value=''});
+dirInput.addEventListener('change',function(){handleFiles(dirInput.files);dirInput.value=''});
+document.getElementById('btnFolder').addEventListener('click',function(ev){ev.stopPropagation();dirInput.click()});
 ['dragover','dragenter'].forEach(function(e){dropZone.addEventListener(e,function(ev){ev.preventDefault();dropZone.classList.add('dragover')})});
 ['dragleave','drop'].forEach(function(e){dropZone.addEventListener(e,function(ev){ev.preventDefault();dropZone.classList.remove('dragover')})});
 dropZone.addEventListener('drop',function(e){if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files)});
