@@ -193,9 +193,9 @@ tfoot td.tot-money{color:#00e676;white-space:nowrap}
       <tr><th>CRT</th><th>tpRegimeIBSCBS</th><th>Leitura</th></tr>
       <tr><td>1 / 2</td><td>1</td><td>Simples com opção pelo regime regular do IBS/CBS (gIBSUF, gIBSMun, gCBS)</td></tr>
       <tr><td>1 / 2</td><td>ausente</td><td>Simples sem regime regular (IBS/CBS no gTribSN) — em XML anterior à NT, campo não informado</td></tr>
-      <tr><td>3</td><td>2 ou 3</td><td>Regime Normal com opção pendente pelo Simples (CRT 1 ou 2), sem regime regular</td></tr>
-      <tr><td>3</td><td>4</td><td>Regime Normal com opção pendente pelo Simples e regime regular do IBS/CBS</td></tr>
-      <tr><td>3</td><td>ausente</td><td>Regime Normal</td></tr>
+      <tr><td>3</td><td>2 ou 3</td><td>Regime Normal com opção pendente pelo Simples (CRT 1 ou 2) — tratado como regime regular</td></tr>
+      <tr><td>3</td><td>4</td><td>Regime Normal com opção pendente pelo Simples e opção pelo regime regular do IBS/CBS</td></tr>
+      <tr><td>3</td><td>ausente</td><td>Regime Normal (regime regular do IBS/CBS)</td></tr>
       <tr><td>4</td><td>—</td><td>MEI — não informa o grupo IBSCBS</td></tr>
     </table>
     <b>Simples que optou pelo regime regular:</b> emitente CRT 1 ou 2 com <b>tpRegimeIBSCBS=1</b> é o optante do Simples
@@ -205,6 +205,10 @@ tfoot td.tot-money{color:#00e676;white-space:nowrap}
     <br>O <b>PIS</b> continua exibido apenas como <b>indício</b> de Lucro Presumido (0,65%) ou Real (1,65%) quando o CRT é 3 sem
     tpRegimeIBSCBS — a NT 2026.005 não define o regime pelo PIS. Com a extinção do PIS/COFINS em 31/12/2026, a coluna passa a
     exibir a <b>CBS (pCBS)</b> nas notas de 2027 em diante; a classificação nunca depende desse campo.
+    <br><b>A partir de 2027</b> — com o fim do PIS/COFINS e a CBS cheia (referência de 11,34%) — a identificação continua a mesma:
+    <b>CRT + tpRegimeIBSCBS</b>. Está no <b>regime regular do IBS/CBS</b> o emitente <b>CRT 3</b> (tp 2, 3, 4 ou ausente) e o
+    <b>CRT 1/2 com tp=1</b>; o <b>CRT 1/2 sem tp</b> fica no regime do Simples (gTribSN) e o <b>MEI</b> não informa IBS/CBS.
+    Use o filtro <b>“Regime Regular do IBS/CBS (todos)”</b> para listar todos os emitentes do regime regular.
     A coluna de conferência aponta as rejeições previstas na NT (1275, 1276, 1277 e 1284). Quando o XML não trouxer marcador
     suficiente, use <b>“Corrigir…”</b> na coluna Ação.
   </div>
@@ -217,7 +221,8 @@ tfoot td.tot-money{color:#00e676;white-space:nowrap}
         <option value="all">Todos os regimes</option>
         <option value="1">CRT 1 — Simples Nacional</option>
         <option value="2">CRT 2 — Excesso sublimite</option>
-        <option value="RR">Com opção pelo Regime Regular (tp 1/4)</option>
+        <option value="REG">Regime Regular do IBS/CBS (todos)</option>
+        <option value="RR">Com opção explícita pelo Regular (tp 1/4)</option>
         <option value="3">CRT 3 — Regime Normal</option>
         <option value="3P">CRT 3 — Opção pendente do Simples</option>
         <option value="4">CRT 4 — MEI</option>
@@ -298,38 +303,38 @@ function classify(crt,tp,pPIS){
   if(crt==='1'||crt==='2'){
     var suf=(crt==='1')?'Simples Nacional':'Simples Nacional — excesso de sublimite';
     var cls=(crt==='1')?'b-1':'b-2';
-    if(tp==='1')return{key:crt,nome:suf+' — com Regime Regular do IBS/CBS',classe:cls,tp:tp,rr:true,inc:false,
+    if(tp==='1')return{key:crt,nome:suf+' — com Regime Regular do IBS/CBS',classe:cls,tp:tp,rr:true,ibs:'regular',inc:false,
       interp:'CRT '+crt+' + tpRegimeIBSCBS=1 → Simples com opção pelo regime regular do IBS/CBS: informa gIBSUF, gIBSMun e gCBS (NT 2026.005, 2.1 e 2.3).'};
-    if(tp==='')return{key:crt,nome:suf+' — regime IBS/CBS não informado',classe:cls,tp:'',rr:null,inc:false,
+    if(tp==='')return{key:crt,nome:suf+' — regime IBS/CBS não informado',classe:cls,tp:'',rr:null,ibs:'simples',inc:false,
       interp:'CRT '+crt+' sem tpRegimeIBSCBS → não é possível afirmar se houve opção pelo regime regular. Em XML gerado a partir da NT 2026.005 (produção 16/11/2026), a ausência indica Simples sem regime regular, com IBS/CBS no gTribSN; em XML anterior, o campo simplesmente não existia.'};
-    return{key:'X',nome:'Inconsistente: CRT '+crt+' com tpRegimeIBSCBS='+tp,classe:'b-x',tp:tp,rr:null,inc:true,
+    return{key:'X',nome:'Inconsistente: CRT '+crt+' com tpRegimeIBSCBS='+tp,classe:'b-x',tp:tp,rr:null,ibs:'?',inc:true,
       interp:'tpRegimeIBSCBS='+tp+' só é admitido para CRT=3 (NT 2026.005, 2.1). Revise o XML do emitente.'};
   }
   if(crt==='3'){
-    if(tp==='2')return{key:'3P',nome:'Regime Normal — opção pendente pelo Simples (CRT 1)',classe:'b-3p',tp:tp,rr:false,inc:false,
-      interp:'CRT 3 + tpRegimeIBSCBS=2 → opção pelo Simples (CRT 1) indeferida e em discussão, sem regime regular do IBS/CBS. Considerado regime regular para todos os fins (NT 2026.005, 2.1).'};
-    if(tp==='3')return{key:'3P',nome:'Regime Normal — opção pendente pelo Simples (CRT 2)',classe:'b-3p',tp:tp,rr:false,inc:false,
-      interp:'CRT 3 + tpRegimeIBSCBS=3 → opção pelo Simples com excesso de sublimite (CRT 2) indeferida e em discussão, sem regime regular do IBS/CBS (NT 2026.005, 2.1).'};
-    if(tp==='4')return{key:'3P',nome:'Regime Normal — opção pendente pelo Simples, com Regime Regular',classe:'b-3p',tp:tp,rr:true,inc:false,
+    if(tp==='2')return{key:'3P',nome:'Regime Normal — opção pendente pelo Simples (CRT 1)',classe:'b-3p',tp:tp,rr:false,ibs:'regular',inc:false,
+      interp:'CRT 3 + tpRegimeIBSCBS=2 → opção pelo Simples (CRT 1) indeferida e em discussão, sem opção pelo regime regular do IBS/CBS. Considerado regime regular para todos os fins, inclusive crédito e apuração (NT 2026.005, 2.1).'};
+    if(tp==='3')return{key:'3P',nome:'Regime Normal — opção pendente pelo Simples (CRT 2)',classe:'b-3p',tp:tp,rr:false,ibs:'regular',inc:false,
+      interp:'CRT 3 + tpRegimeIBSCBS=3 → opção pelo Simples com excesso de sublimite (CRT 2) indeferida e em discussão, sem opção pelo regime regular do IBS/CBS. Considerado regime regular para todos os fins (NT 2026.005, 2.1).'};
+    if(tp==='4')return{key:'3P',nome:'Regime Normal — opção pendente pelo Simples, com Regime Regular',classe:'b-3p',tp:tp,rr:true,ibs:'regular',inc:false,
       interp:'CRT 3 + tpRegimeIBSCBS=4 → opção pendente pelo Simples (vai migrar para CRT 1 ou 2) e optante do regime regular do IBS/CBS (NT 2026.005, 2.1).'};
-    if(tp==='')return{key:'3',nome:'Regime Normal',classe:'b-3',tp:'',rr:false,inc:false,
-      interp:'CRT 3 sem tpRegimeIBSCBS → Regime Normal, sem opção pendente pelo Simples. Em XML anterior à NT 2026.005 o campo não existia.'+pis};
-    return{key:'X',nome:'Inconsistente: CRT 3 com tpRegimeIBSCBS=1',classe:'b-x',tp:tp,rr:null,inc:true,
+    if(tp==='')return{key:'3',nome:'Regime Normal',classe:'b-3',tp:'',rr:false,ibs:'regular',inc:false,
+      interp:'CRT 3 sem tpRegimeIBSCBS → Regime Normal (regime regular do IBS/CBS), sem opção pendente pelo Simples. Em XML anterior à NT 2026.005 o campo não existia.'+pis};
+    return{key:'X',nome:'Inconsistente: CRT 3 com tpRegimeIBSCBS=1',classe:'b-x',tp:tp,rr:null,ibs:'?',inc:true,
       interp:'tpRegimeIBSCBS=1 é exclusivo de emitente CRT=1 ou 2 (NT 2026.005, 2.1). Revise o XML.'};
   }
-  if(crt==='4')return{key:'4',nome:'MEI — Microempreendedor Individual',classe:'b-4',tp:tp,rr:false,inc:false,
+  if(crt==='4')return{key:'4',nome:'MEI — Microempreendedor Individual',classe:'b-4',tp:tp,rr:false,ibs:'mei',inc:false,
     interp:'CRT 4 → MEI. Não deve informar o grupo IBSCBS (NT 2026.005, 2.3).'+(tp?' tpRegimeIBSCBS também não é previsto para MEI.':'')};
-  return{key:'0',nome:'CRT não encontrado / inválido',classe:'b-0',tp:tp,rr:null,inc:false,
+  return{key:'0',nome:'CRT não encontrado / inválido',classe:'b-0',tp:tp,rr:null,ibs:'?',inc:false,
     interp:'Tag <CRT> ausente ou com valor inesperado ("'+esc(crt)+'"). Verifique se é NF-e/NFC-e válida.'};
 }
 
 function manualReg(k){
-  if(k==='1')return{key:'1',nome:'Simples Nacional',classe:'b-1',tp:'',rr:false,inc:false,interp:'Ajuste manual: Simples Nacional.'};
-  if(k==='2')return{key:'2',nome:'Simples Nacional — excesso de sublimite',classe:'b-2',tp:'',rr:false,inc:false,interp:'Ajuste manual: Simples com excesso de sublimite.'};
-  if(k==='3')return{key:'3',nome:'Regime Normal',classe:'b-3',tp:'',rr:false,inc:false,interp:'Ajuste manual: Regime Normal.'};
-  if(k==='3P')return{key:'3P',nome:'Regime Normal — opção pendente pelo Simples',classe:'b-3p',tp:'',rr:false,inc:false,interp:'Ajuste manual: opção pendente pelo Simples Nacional.'};
-  if(k==='4')return{key:'4',nome:'MEI — Microempreendedor Individual',classe:'b-4',tp:'',rr:false,inc:false,interp:'Ajuste manual: MEI.'};
-  return{key:'0',nome:'CRT não encontrado / inválido',classe:'b-0',tp:'',rr:null,inc:false,interp:'Ajuste manual.'};
+  if(k==='1')return{key:'1',nome:'Simples Nacional',classe:'b-1',tp:'',rr:false,ibs:'simples',inc:false,interp:'Ajuste manual: Simples Nacional.'};
+  if(k==='2')return{key:'2',nome:'Simples Nacional — excesso de sublimite',classe:'b-2',tp:'',rr:false,ibs:'simples',inc:false,interp:'Ajuste manual: Simples com excesso de sublimite.'};
+  if(k==='3')return{key:'3',nome:'Regime Normal',classe:'b-3',tp:'',rr:false,ibs:'regular',inc:false,interp:'Ajuste manual: Regime Normal.'};
+  if(k==='3P')return{key:'3P',nome:'Regime Normal — opção pendente pelo Simples',classe:'b-3p',tp:'',rr:false,ibs:'regular',inc:false,interp:'Ajuste manual: opção pendente pelo Simples Nacional.'};
+  if(k==='4')return{key:'4',nome:'MEI — Microempreendedor Individual',classe:'b-4',tp:'',rr:false,ibs:'mei',inc:false,interp:'Ajuste manual: MEI.'};
+  return{key:'0',nome:'CRT não encontrado / inválido',classe:'b-0',tp:'',rr:null,ibs:'?',inc:false,interp:'Ajuste manual.'};
 }
 function applyManual(d,key){
   if(!key){if(d.regAuto)d.reg=d.regAuto;d.manual=null;return}
@@ -459,6 +464,7 @@ function filtered(){
   return docs.filter(function(d){
     if(f!=='all'){
       if(f==='3'){if(!(d.reg.key==='3'||d.reg.key==='3P'))return false}
+      else if(f==='REG'){if(d.reg.ibs!=='regular')return false}
       else if(f==='RR'){if(d.reg.rr!==true)return false}
       else if(f==='CHK'){if(!d.checks.length)return false}
       else if(f==='X'){if(!isIncons(d))return false}
@@ -647,14 +653,15 @@ document.getElementById('btnClearTop').addEventListener('click',clearAll);
 document.getElementById('btnPrint').addEventListener('click',function(){window.print()});
 document.getElementById('btnCSV').addEventListener('click',function(){
   if(!docs.length){toast('Nada para exportar.');return}
-  var head=['arquivo','emitente','cnpj_cpf','uf','nNF','serie','mod','tipo','crt','tp_regime_ibscbs','regime','regime_regular_ibscbs','c_ativ_sn','gTRIBsn_itens','vIBSSN','vCBSSN','vIBSSN_total','vCBSSN_total','conferencia','cst_pis','grupo_pis','pPIS_percent','pCBS_percent','valor_nf','interpretacao'];
+  var head=['arquivo','emitente','cnpj_cpf','uf','nNF','serie','mod','tipo','crt','tp_regime_ibscbs','regime','regime_regular_ibscbs','regime_ibs_cbs','c_ativ_sn','gTRIBsn_itens','vIBSSN','vCBSSN','vIBSSN_total','vCBSSN_total','conferencia','cst_pis','grupo_pis','pPIS_percent','pCBS_percent','valor_nf','interpretacao'];
   var q=function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'};
   var lines=[head.join(';')];
   filtered().forEach(function(d){
     var vi=!isNaN(d.vIBSSNtot)?d.vIBSSNtot:d.vIBSSNsum;
     var vc=!isNaN(d.vCBSSNtot)?d.vCBSSNtot:d.vCBSSNsum;
     lines.push([d.fileName,d.nome,d.cnpj,d.uf,d.nNF,d.serie,d.mod,d.tipo,d.crt==null?'':d.crt,d.tp,
-      d.reg.nome,d.reg.rr===true?'sim':(d.reg.rr===false?'não':''),d.cAtiv.join(' '),
+      d.reg.nome,d.reg.rr===true?'sim':(d.reg.rr===false?'não':''),
+      d.reg.ibs==='regular'?'regular':(d.reg.ibs==='simples'?'simples':(d.reg.ibs==='mei'?'mei':'')),d.cAtiv.join(' '),
       d.hasItemTribSN?'sim':'não',String(vi.toFixed(2)).replace('.',','),String(vc.toFixed(2)).replace('.',','),
       isNaN(d.vIBSSNtot)?'':String(d.vIBSSNtot.toFixed(2)).replace('.',','),
       isNaN(d.vCBSSNtot)?'':String(d.vCBSSNtot.toFixed(2)).replace('.',','),
