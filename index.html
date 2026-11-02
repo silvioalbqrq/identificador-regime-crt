@@ -47,14 +47,6 @@ body{background:var(--bg-body);color:var(--text-dark);min-height:100vh;line-heig
 .card-title{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;overflow-wrap:anywhere}
 .card-value{font-size:24px;font-weight:800}
 .card-desc{font-size:11px;color:#64748b;margin-top:4px}
-.notes-bar{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-bottom:20px}
-.notes-empty{grid-column:1/-1;background:#fff;border:1px dashed var(--border-color);border-radius:10px;padding:20px;text-align:center;color:var(--text-muted);font-size:13px}
-.note-card{background:var(--card-dark);border:1px solid #334155;border-radius:10px;padding:12px 16px;color:var(--text-light)}
-.note-card-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
-.note-card-title{font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.note-remove{background:none;border:none;color:#94a3b8;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px}
-.note-remove:hover{color:#f87171;background:rgba(248,113,113,.1)}
-.note-card-meta{font-size:11px;color:#94a3b8;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .action-bar{background:var(--card-dark);color:var(--text-light);padding:14px 20px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .action-bar h3{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
 .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -104,11 +96,7 @@ tbody tr:hover{background:#f1f5f9}
 .table-wrap table td:nth-child(10){max-width:300px;font-size:11px;line-height:1.45}
 tfoot td{background:#0f2a44;color:#e2e8f0;font-weight:700;padding:12px;border-top:2px solid #334155;font-size:12.5px}
 tfoot td.tot-money{color:#00e676;white-space:nowrap}
-.totals-bar{background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:13px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:space-between}
-.totals-bar .t-item{font-size:12px;color:#475569}
-.totals-bar .t-item b{display:block;font-size:15px;color:#0f172a}
-.totals-bar .t-grand b{color:#1d4ed8;font-size:18px}
-.explain,.totals-bar{border-top:3px solid var(--hub-gold)}
+.explain{border-top:3px solid var(--hub-gold)}
 .upload-section{border-top:3px solid var(--hub-gold)}
 .pagination{background:#fff;border:1px solid var(--border-color);border-top:none;border-radius:0 0 10px 10px;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px;color:#475569}
 .pagination .pg-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -163,7 +151,7 @@ tfoot td.tot-money{color:#00e676;white-space:nowrap}
   <div class="legend no-print">
     <div class="legend-card lg-1"><b>CRT 1 — Simples Nacional</b><span>tpRegimeIBSCBS=1 indica opção pelo regime regular do IBS/CBS.</span></div>
     <div class="legend-card lg-2"><b>CRT 2 — Simples, excesso sublimite</b><span>Mesma regra do CRT 1 para o IBS/CBS.</span></div>
-    <div class="legend-card lg-3"><b>CRT 3 — Regime Normal</b><span>tpRegimeIBSCBS=2, 3 ou 4 indica opção pendente pelo Simples.</span></div>
+    <div class="legend-card lg-3"><b>CRT 3 — Regime Normal</b><span>tpRegimeIBSCBS=2, 3 ou 4 indica opção pendente pelo Simples; no 4 também há opção pelo regime regular.</span></div>
     <div class="legend-card lg-4"><b>CRT 4 — MEI</b><span>Não deve informar o grupo IBSCBS.</span></div>
     <div class="legend-card lg-x"><b>Conferência NT 2026.005</b><span>Regras 1275, 1276, 1277 e 1284 validadas por nota.</span></div>
   </div>
@@ -182,8 +170,6 @@ tfoot td.tot-money{color:#00e676;white-space:nowrap}
     <span id="clearCount"></span>
     <button class="btn-action btn-clear-top" id="btnClearTop"><i class="fa-solid fa-trash"></i> Limpar tudo</button>
   </div>
-
-  <div class="notes-bar no-print" id="notesBar"><div class="notes-empty">Nenhum XML carregado. Faça o upload para identificar o regime.</div></div>
 
   <div class="explain">
     <b>Como funciona (somente NF-e/NFC-e, modelos 55 e 65):</b> o regime é identificado pela combinação do
@@ -277,7 +263,7 @@ tfoot td.tot-money{color:#00e676;white-space:nowrap}
 "use strict";
 var docs=[], seq=0, page=1, perPage=10;
 var dropZone=document.getElementById('dropZone'), fileInput=document.getElementById('fileInput'),
-    notesBar=document.getElementById('notesBar'), tbody=document.getElementById('tableBody'),
+    tbody=document.getElementById('tableBody'),
     searchInput=document.getElementById('searchInput'), regimeFilter=document.getElementById('regimeFilter'),
     perPageSel=document.getElementById('perPage'),
     toastEl=document.getElementById('toast'), toastTimer=null;
@@ -288,7 +274,6 @@ function direct(p,t){if(!p)return null;for(var i=0;i<p.childNodes.length;i++){va
 function num(v){if(v==null||v==='')return NaN;var n=parseFloat(String(v).replace(',','.'));return isNaN(n)?NaN:n}
 function fmtPIS(v){if(v==null||isNaN(v))return '—';return v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:4})+'%'}
 function fmtMoney(v){if(v==null||isNaN(v))return '—';return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
-function esc(s){return String(s==null?'':s)}
 function near(a,b,tol){return Math.abs(a-b)<=tol}
 
 /* Classificação conforme NT 2026.005 v1.00, item 2.1 (CRT + tpRegimeIBSCBS) */
@@ -305,7 +290,7 @@ function classify(crt,tp,pPIS){
     var cls=(crt==='1')?'b-1':'b-2';
     if(tp==='1')return{key:crt,nome:suf+' — com Regime Regular do IBS/CBS',classe:cls,tp:tp,rr:true,ibs:'regular',inc:false,
       interp:'CRT '+crt+' + tpRegimeIBSCBS=1 → Simples com opção pelo regime regular do IBS/CBS: informa gIBSUF, gIBSMun e gCBS (NT 2026.005, 2.1 e 2.3).'};
-    if(tp==='')return{key:crt,nome:suf+' — regime IBS/CBS não informado',classe:cls,tp:'',rr:null,ibs:'simples',inc:false,
+    if(tp==='')return{key:crt,nome:suf+' — regime IBS/CBS não informado',classe:cls,tp:'',rr:null,ibs:'nao_informado',inc:false,
       interp:'CRT '+crt+' sem tpRegimeIBSCBS → não é possível afirmar se houve opção pelo regime regular. Em XML gerado a partir da NT 2026.005 (produção 16/11/2026), a ausência indica Simples sem regime regular, com IBS/CBS no gTribSN; em XML anterior, o campo simplesmente não existia.'};
     return{key:'X',nome:'Inconsistente: CRT '+crt+' com tpRegimeIBSCBS='+tp,classe:'b-x',tp:tp,rr:null,ibs:'?',inc:true,
       interp:'tpRegimeIBSCBS='+tp+' só é admitido para CRT=3 (NT 2026.005, 2.1). Revise o XML do emitente.'};
@@ -325,7 +310,7 @@ function classify(crt,tp,pPIS){
   if(crt==='4')return{key:'4',nome:'MEI — Microempreendedor Individual',classe:'b-4',tp:tp,rr:false,ibs:'mei',inc:false,
     interp:'CRT 4 → MEI. Não deve informar o grupo IBSCBS (NT 2026.005, 2.3).'+(tp?' tpRegimeIBSCBS também não é previsto para MEI.':'')};
   return{key:'0',nome:'CRT não encontrado / inválido',classe:'b-0',tp:tp,rr:null,ibs:'?',inc:false,
-    interp:'Tag <CRT> ausente ou com valor inesperado ("'+esc(crt)+'"). Verifique se é NF-e/NFC-e válida.'};
+    interp:'Tag <CRT> ausente ou com valor inesperado ("'+crt+'"). Verifique se é NF-e/NFC-e válida.'};
 }
 
 function manualReg(k){
@@ -350,7 +335,23 @@ function mostFrequent(arr){
   return best;
 }
 
-function parseNFe(inf,xml,fileName){
+function conferir(o){
+  var checks=[];
+  if(o.hasItem&&!o.gTot)checks.push('Regra 1275: itens com gTribSN e total gTribSN ausente');
+  if(!o.hasItem&&o.gTot)checks.push('Regra 1276: total gTribSN informado sem gTribSN nos itens');
+  if(o.gTot&&!isNaN(o.vIBSSNtot)&&Math.abs(o.vIBSSNtot-o.vIBSSNsum)>0.01)checks.push('Regra 1277: vIBSSN total difere da soma dos itens');
+  if(o.gTot&&!isNaN(o.vCBSSNtot)&&Math.abs(o.vCBSSNtot-o.vCBSSNsum)>0.01)checks.push('Regra 1284: vCBSSN total difere da soma dos itens');
+  if(o.crt==='4'&&(o.itemIBSCBS||o.hasItem||o.gTot))checks.push('MEI (CRT 4) não deve informar o grupo IBSCBS');
+  if(o.camposNT){
+    var exigeAtivSN=o.crt==='1'||o.crt==='2'||(o.crt==='3'&&(o.tp==='2'||o.tp==='3'||o.tp==='4'));
+    if(exigeAtivSN&&!o.cAtiv.length)checks.push('cAtivSN ausente — a NT 2026.005 (2.2) exige o código de atividade em cada item');
+    if((((o.crt==='1'||o.crt==='2')&&o.tp==='1')||(o.crt==='3'&&o.tp==='4'))&&(o.hasItem||o.gTot))checks.push('gTribSN não deve ser informado em quem optou pelo regime regular (NT 2026.005, 2.3)');
+    if(((o.crt==='3'&&o.tp==='3')||(o.crt==='2'&&o.tp===''))&&o.temIBSSN)checks.push('gIBSSN não deve ser informado neste regime — o gTribSN leva só gCBSSN (NT 2026.005, 2.3)');
+  }
+  return checks;
+}
+
+function parseNFe(inf,fileName){
   var emit=inf.getElementsByTagName('emit')[0];
   if(!emit)return{error:'Tag <emit> não encontrada.'};
   var crt=direct(emit,'CRT'); if(crt==null)crt=gv(emit,'CRT');
@@ -361,10 +362,10 @@ function parseNFe(inf,xml,fileName){
   var ide=inf.getElementsByTagName('ide')[0];
   var nNF=ide?gv(ide,'nNF'):null, serie=ide?gv(ide,'serie'):null, mod=ide?gv(ide,'mod'):null;
   var tipo=(mod==='65')?'NFC-e':'NF-e';
-  var dets=xml.getElementsByTagName('det');
+  var dets=inf.getElementsByTagName('det');
   var pPIS=null,pisCST=null,pisGrupo='—',pList=[];
   var pCBS=null,cbsCST=null,cbsList=[];
-  var cAtiv=[], hasItemTribSN=false, itemIBSCBS=false, vIBSSNsum=0, vCBSSNsum=0;
+  var cAtiv=[], hasItemTribSN=false, temIBSSN=false, itemIBSCBS=false, vIBSSNsum=0, vCBSSNsum=0;
   for(var d=0;d<dets.length;d++){
     var det=dets[d];
     var prod=det.getElementsByTagName('prod')[0];
@@ -374,6 +375,7 @@ function parseNFe(inf,xml,fileName){
     var gtsn=det.getElementsByTagName('gTribSN')[0];
     if(gtsn){
       hasItemTribSN=true;
+      if(gtsn.getElementsByTagName('gIBSSN').length)temIBSSN=true;
       var a=num(gv(gtsn,'vIBSSN')); if(!isNaN(a))vIBSSNsum+=a;
       var b=num(gv(gtsn,'vCBSSN')); if(!isNaN(b))vCBSSNsum+=b;
     }
@@ -416,18 +418,13 @@ function parseNFe(inf,xml,fileName){
     vNF=achou?soma:0;
   }
 
-  var checks=[];
-  if(hasItemTribSN&&!gTot)checks.push('Regra 1275: itens com gTribSN e total gTribSN ausente');
-  if(!hasItemTribSN&&gTot)checks.push('Regra 1276: total gTribSN informado sem gTribSN nos itens');
-  if(gTot&&!isNaN(vIBSSNtot)&&Math.abs(vIBSSNtot-vIBSSNsum)>0.01)checks.push('Regra 1277: vIBSSN total difere da soma dos itens');
-  if(gTot&&!isNaN(vCBSSNtot)&&Math.abs(vCBSSNtot-vCBSSNsum)>0.01)checks.push('Regra 1284: vCBSSN total difere da soma dos itens');
-  if(crt==='4'&&(itemIBSCBS||hasItemTribSN||gTot))checks.push('MEI (CRT 4) não deve informar o grupo IBSCBS');
-  if((crt==='1'||crt==='2')&&tp==='1'&&(hasItemTribSN||gTot))checks.push('gTribSN não deve ser informado no Simples com regime regular (tpRegimeIBSCBS=1)');
+  var temCamposNT=(tp!=null&&tp!=='')||cAtiv.length>0||hasItemTribSN||!!gTot||itemIBSCBS;
+  var checks=conferir({crt:crt,tp:tp,cAtiv:cAtiv,camposNT:temCamposNT,hasItem:hasItemTribSN,temIBSSN:temIBSSN,
+    itemIBSCBS:itemIBSCBS,gTot:!!gTot,vIBSSNtot:vIBSSNtot,vIBSSNsum:vIBSSNsum,vCBSSNtot:vCBSSNtot,vCBSSNsum:vCBSSNsum});
 
   var cls=classify(crt,tp,pPIS);
-  var camposNT=(tp!=null&&tp!=='')||cAtiv.length>0||hasItemTribSN||!!gTot;
-  return{id:++seq,tipo:tipo,fileName:fileName,nome:nome,cnpj:cnpj,uf:uf,nNF:nNF||'?',serie:serie||'?',mod:mod||'',
-    crt:crt,tp:tp,cAtiv:cAtiv,pPIS:pPIS,pisCST:pisCST,pisGrupo:pisGrupo,pCBS:pCBS,cbsCST:cbsCST,reg:cls,camposNT:camposNT,
+  return{id:++seq,chave:inf.getAttribute('Id')||'',tipo:tipo,fileName:fileName,nome:nome,cnpj:cnpj,uf:uf,nNF:nNF||'?',serie:serie||'?',mod:mod||'',
+    crt:crt,tp:tp,cAtiv:cAtiv,pPIS:pPIS,pisCST:pisCST,pisGrupo:pisGrupo,pCBS:pCBS,cbsCST:cbsCST,reg:cls,camposNT:temCamposNT,
     hasItemTribSN:hasItemTribSN,hasTotTribSN:!!gTot,itemIBSCBS:itemIBSCBS,
     vIBSSNsum:vIBSSNsum,vCBSSNsum:vCBSSNsum,vIBSSNtot:vIBSSNtot,vCBSSNtot:vCBSSNtot,
     checks:checks,nItens:dets.length,vNF:vNF||0,origem:'<CRT> + <tpRegimeIBSCBS> em <emit>'};
@@ -436,21 +433,38 @@ function parseNFe(inf,xml,fileName){
 function parseXML(text,fileName){
   var p=new DOMParser(), xml=p.parseFromString(text,'text/xml');
   if(xml.getElementsByTagName('parsererror').length>0)return{error:'XML inválido.'};
-  var inf=xml.getElementsByTagName('infNFe')[0];
-  if(!inf)return{error:'Arquivo rejeitado: somente NF-e/NFC-e são aceitas (tag <infNFe> não encontrada).'};
-  return parseNFe(inf,xml,fileName||'xml');
+  var infs=xml.getElementsByTagName('infNFe');
+  if(!infs.length)return{error:'Arquivo rejeitado: somente NF-e/NFC-e são aceitas (tag <infNFe> não encontrada).'};
+  var list=[];
+  for(var i=0;i<infs.length;i++){
+    var r=parseNFe(infs[i],fileName||'xml');
+    if(r.error)return r;
+    list.push(r);
+  }
+  return{list:list};
 }
 
 function readFile(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result)};r.onerror=function(){rej(r.error)};r.readAsText(f)})}
-async function addFile(f){
+async function lerArquivo(f){
   try{
     var t=await readFile(f), r=parseXML(t,f.name);
-    if(r.error){toast('"'+f.name+'": '+r.error);return}
-    docs.push(r);page=1;render();
-    toast('"'+f.name+'": CRT '+(r.crt==null?'ausente':r.crt)+(r.tp?' + tp '+r.tp:'')+' → '+r.reg.nome);
-  }catch(e){toast('Erro em "'+f.name+'": '+e.message)}
+    if(r.error){toast('"'+f.name+'": '+r.error);return{add:0,dup:0}}
+    var add=0,dup=0;
+    r.list.forEach(function(d){
+      if(d.chave&&docs.some(function(x){return x.chave===d.chave})){dup++;return}
+      docs.push(d);add++;
+    });
+    return{add:add,dup:dup};
+  }catch(e){toast('Erro em "'+f.name+'": '+e.message);return{add:0,dup:0}}
 }
-function handleFiles(fs){for(var i=0;i<fs.length;i++){if(!/\.xml$/i.test(fs[i].name)){toast('"'+fs[i].name+'" ignorado (não é .xml)');continue}addFile(fs[i])}}
+async function handleFiles(fs){
+  var add=0,dup=0;
+  for(var i=0;i<fs.length;i++){
+    if(!/\.xml$/i.test(fs[i].name)){toast('"'+fs[i].name+'" ignorado (não é .xml)');continue}
+    var r=await lerArquivo(fs[i]);add+=r.add;dup+=r.dup;
+  }
+  if(add||dup){page=1;render();toast(add+' nota(s) carregada(s)'+(dup?' • '+dup+' repetida(s) ignorada(s)':''))}
+}
 
 dropZone.addEventListener('click',function(){fileInput.click()});
 fileInput.addEventListener('change',function(){handleFiles(fileInput.files);fileInput.value=''});
@@ -470,7 +484,8 @@ function filtered(){
       else if(f==='X'){if(!isIncons(d))return false}
       else if(d.reg.key!==f)return false;
     }
-    if(q){var h=(d.nome+' '+d.cnpj+' '+d.fileName+' '+(d.nNF||'')).toUpperCase();if(h.indexOf(q)<0)return false}
+    if(q){var h=(d.nome+' '+d.cnpj+' '+d.fileName+' '+(d.nNF||'')).toUpperCase();
+      if(h.indexOf(q)<0){var qd=q.replace(/\D/g,'');if(!qd||String(d.cnpj).replace(/\D/g,'').indexOf(qd)<0)return false}}
     return true;
   });
 }
@@ -495,12 +510,12 @@ function render(){
   document.getElementById('cP').textContent=LP.length+' nota(s)';
   document.getElementById('c4').textContent=L4.length+' nota(s)';
   var chk=docs.filter(function(d){return d.checks.length}).length;
-  document.getElementById('cX').textContent=(L0.length+LX.length)+' nota(s)'+(chk?' • '+chk+' c/ alerta':'');
+  document.getElementById('cX').textContent=(L0.length+LX.length)+' nota(s)';
   var leg=docs.filter(function(d){return !d.camposNT&&d.crt!=='4'}).length;
-  document.getElementById('cTotal').textContent=docs.length+' nota(s)'+(leg?' • '+leg+' sem campos da NT':'');
+  document.getElementById('cTotal').textContent=docs.length+' nota(s)'+(leg?' • '+leg+' sem campos da NT':'')+(chk?' • '+chk+' c/ alerta':'');
   document.getElementById('hdrTotal').textContent=docs.length;
   document.getElementById('hdrValor').textContent=fmtMoney(sT);
-  document.getElementById('hdrRegime').textContent=docs.length===0?'—':(L1.length+L2.length)+' Simples • '+L3.length+' Normal • '+L4.length+' MEI';
+  document.getElementById('hdrRegime').textContent=docs.length===0?'—':(L1.length+L2.length)+' Simples • '+L3.length+' Normal • '+L4.length+' MEI'+((L0.length+LX.length)?' • '+(L0.length+LX.length)+' inconsist.':'');
   var fLen=filtered().length, totalPages=Math.max(1,Math.ceil(fLen/perPage));
   if(page>totalPages)page=totalPages;
   if(page<1)page=1;
@@ -509,24 +524,7 @@ function render(){
   if(docs.length){clearBar.style.display='';document.getElementById('clearCount').textContent=docs.length+' nota(s) carregada(s) — limpe para carregar outros XMLs.'}
   else{clearBar.style.display='none'}
   document.getElementById('printDate').textContent='Gerado em '+new Date().toLocaleString('pt-BR')+' • Total geral '+fmtMoney(sT)+' em '+docs.length+' nota(s) • NT 2026.005 v1.00';
-  renderNotes();renderTable();
-}
-
-function renderNotes(){
-  notesBar.textContent='';
-  if(!docs.length){var e=document.createElement('div');e.className='notes-empty';e.textContent='Nenhum XML carregado. Faça o upload para identificar o regime.';notesBar.appendChild(e);return}
-  docs.forEach(function(d){
-    var c=document.createElement('div');c.className='note-card';
-    var h=document.createElement('div');h.className='note-card-head';
-    var t=document.createElement('div');t.className='note-card-title';t.textContent=d.nome;t.title=d.fileName+' — '+d.nome;
-    var rm=document.createElement('button');rm.className='note-remove';rm.textContent='✕';rm.title='Remover';
-    rm.addEventListener('click',function(){docs=docs.filter(function(x){return x.id!==d.id});render()});
-    h.appendChild(t);h.appendChild(rm);c.appendChild(h);
-    var m=document.createElement('div');m.className='note-card-meta';m.textContent='NF '+(d.nNF||'?')+' • Série '+(d.serie||'?')+' • '+d.fileName;m.title=d.fileName;c.appendChild(m);
-    var vm=document.createElement('div');vm.style.cssText='font-size:13px;font-weight:800;color:#00e676;margin-bottom:8px';vm.textContent=fmtMoney(d.vNF)+' • vNF';c.appendChild(vm);
-    var b=document.createElement('span');b.className='badge '+d.reg.classe;b.textContent='CRT '+(d.crt==null?'?':d.crt)+(d.tp?' / tp '+d.tp:'')+' • '+d.reg.nome;b.title=d.reg.interp;c.appendChild(b);
-    notesBar.appendChild(c);
-  });
+  renderTable();
 }
 
 function renderTable(){
@@ -605,7 +603,7 @@ function renderTable(){
 
     var ti=document.createElement('td');ti.style.color='#475569';ti.textContent=d.reg.interp;
     if(d.checks.length){var ck=document.createElement('div');ck.className='chk';ck.textContent='⚠ '+d.checks.join(' • ');ti.appendChild(ck)}
-    else if(d.hasTotTribSN||d.hasItemTribSN){var ok=document.createElement('div');ok.className='chk chk-ok';ok.textContent='✓ Conferência NT 2026.005 sem divergências';ti.appendChild(ok)}
+    else if(d.camposNT){var ok=document.createElement('div');ok.className='chk chk-ok';ok.textContent='✓ Conferência NT 2026.005 sem divergências';ti.appendChild(ok)}
     if(!d.camposNT&&d.crt!=='4'){var lg=document.createElement('div');lg.className='chk chk-neutro';lg.textContent='XML sem os campos da NT 2026.005 (tpRegimeIBSCBS, cAtivSN, gTribSN) — emitido antes da implantação';ti.appendChild(lg)}
     tr.appendChild(ti);
 
@@ -661,21 +659,21 @@ document.getElementById('btnCSV').addEventListener('click',function(){
     var vc=!isNaN(d.vCBSSNtot)?d.vCBSSNtot:d.vCBSSNsum;
     lines.push([d.fileName,d.nome,d.cnpj,d.uf,d.nNF,d.serie,d.mod,d.tipo,d.crt==null?'':d.crt,d.tp,
       d.reg.nome,d.reg.rr===true?'sim':(d.reg.rr===false?'não':''),
-      d.reg.ibs==='regular'?'regular':(d.reg.ibs==='simples'?'simples':(d.reg.ibs==='mei'?'mei':'')),d.cAtiv.join(' '),
+      d.reg.ibs==='?'?'':(d.reg.ibs||''),d.cAtiv.join(' '),
       d.hasItemTribSN?'sim':'não',String(vi.toFixed(2)).replace('.',','),String(vc.toFixed(2)).replace('.',','),
       isNaN(d.vIBSSNtot)?'':String(d.vIBSSNtot.toFixed(2)).replace('.',','),
       isNaN(d.vCBSSNtot)?'':String(d.vCBSSNtot.toFixed(2)).replace('.',','),
       d.checks.join(' | '),d.pisCST||'',d.pisGrupo,
       (d.pPIS==null||isNaN(d.pPIS))?'':String(d.pPIS).replace('.',','),
       (d.pCBS==null||isNaN(d.pCBS))?'':String(d.pCBS).replace('.',','),
-      String(d.vNF||0).replace('.',','),d.reg.interp].map(q).join(';'));
+      (d.vNF||0).toFixed(2).replace('.',','),d.reg.interp].map(q).join(';'));
   });
   var blob=new Blob(["\ufeff"+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='regime-crt.csv';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},2000);
 });
 
 /* Gancho de teste/inspeção (não usado pela interface) */
-window.__IDENTIFICACRT__={classify:classify,parseXML:parseXML,versao:'NT 2026.005 v1.00'};
+window.__IDENTIFICACRT__={classify:classify,conferir:conferir,parseXML:parseXML,versao:'NT 2026.005 v1.00'};
 
 render();
 })();
