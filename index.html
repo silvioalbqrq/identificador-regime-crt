@@ -35,7 +35,7 @@ body{background:var(--bg-body);color:var(--text-dark);min-height:100vh;line-heig
 .upload-icon{font-size:32px;color:var(--accent-green);margin-bottom:8px}
 .upload-btn{background:var(--accent-green);color:#052e16;font-weight:700;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;margin-top:10px;display:inline-block;font-size:13px}
 .upload-btn:hover{background:var(--accent-green-dark);color:#fff}
-#fileInput{display:none}
+#fileInput,#dirInput{display:none}
 .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:20px}
 .legend-card{background:#fff;border:1px solid var(--border-color);border-radius:10px;padding:12px 14px;font-size:12px;border-left:4px solid var(--text-muted)}
 .legend-card b{display:block;font-size:12px;margin-bottom:2px}
@@ -473,7 +473,26 @@ async function handleFiles(fs){
 dropZone.addEventListener('click',function(){fileInput.click()});
 fileInput.addEventListener('change',function(){handleFiles(fileInput.files);fileInput.value=''});
 dirInput.addEventListener('change',function(){handleFiles(dirInput.files);dirInput.value=''});
-document.getElementById('btnFolder').addEventListener('click',function(ev){ev.stopPropagation();dirInput.click()});
+
+/* Pasta: usa o seletor de diretório nativo, que já entrega a pasta inteira; sem ele, cai no input webkitdirectory. */
+async function lerPasta(handle){
+  var fs=[];
+  async function varrer(dir){
+    for await(var e of dir.values()){
+      if(e.kind==='file')fs.push(await e.getFile());
+      else if(e.kind==='directory')await varrer(e);
+    }
+  }
+  await varrer(handle);
+  return fs;
+}
+function escolherPasta(){
+  if(!window.showDirectoryPicker){dirInput.click();return}
+  window.showDirectoryPicker().then(lerPasta).then(function(fs){if(fs.length)handleFiles(fs)}).catch(function(e){
+    if(!e||e.name!=='AbortError')dirInput.click();
+  });
+}
+document.getElementById('btnFolder').addEventListener('click',function(ev){ev.stopPropagation();escolherPasta()});
 ['dragover','dragenter'].forEach(function(e){dropZone.addEventListener(e,function(ev){ev.preventDefault();dropZone.classList.add('dragover')})});
 ['dragleave','drop'].forEach(function(e){dropZone.addEventListener(e,function(ev){ev.preventDefault();dropZone.classList.remove('dragover')})});
 dropZone.addEventListener('drop',function(e){if(e.dataTransfer.files.length)handleFiles(e.dataTransfer.files)});
